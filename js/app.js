@@ -7,6 +7,9 @@ const textureLoader = new THREE.TextureLoader();
 // 添加纹理加载错误处理
 textureLoader.crossOrigin = 'anonymous';
 
+// 移动设备速度调整系数
+const MOBILE_SPEED_FACTOR = 0.5; // 移动设备上速度减半
+
 // 安全加载纹理的辅助函数
 function loadTextureWithFallback(url, fallbackColor) {
     return new Promise((resolve) => {
@@ -307,26 +310,104 @@ function checkMobileDevice() {
     if(isMobile) {
         document.body.classList.add('mobile-device');
         
+        // 移动设备上减半速度
+        adjustSpeedsForMobile();
+        
         // 确保渲染器和场景已正确配置
         if (renderer) {
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
-        
-        // 确保摄像机配置正确
-        if (camera) {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-        }
     } else {
         document.body.classList.remove('mobile-device');
+        
+        // 非移动设备恢复默认速度
+        resetSpeedsToDefault();
+        
+        // 恢复默认渲染设置
+        if (renderer) {
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
     }
     
     return isMobile;
 }
 
+// 为移动设备调整速度
+function adjustSpeedsForMobile() {
+    // 调整所有行星的自转和公转速度
+    for (const planetKey in PLANET_DATA) {
+        const planetData = PLANET_DATA[planetKey];
+        
+        // 如果没有保存原始速度，先保存
+        if (!planetData.originalRotationSpeed) {
+            planetData.originalRotationSpeed = planetData.rotationSpeed;
+        }
+        if (!planetData.originalOrbitalSpeed) {
+            planetData.originalOrbitalSpeed = planetData.orbitalSpeed;
+        }
+        
+        // 减半速度
+        planetData.rotationSpeed = planetData.originalRotationSpeed * MOBILE_SPEED_FACTOR;
+        planetData.orbitalSpeed = planetData.originalOrbitalSpeed * MOBILE_SPEED_FACTOR;
+    }
+    
+    console.log("已为移动设备调整速度（减半）");
+}
+
+// 恢复默认速度
+function resetSpeedsToDefault() {
+    // 恢复所有行星的原始速度
+    for (const planetKey in PLANET_DATA) {
+        const planetData = PLANET_DATA[planetKey];
+        
+        // 如果有保存原始速度，恢复它
+        if (planetData.originalRotationSpeed) {
+            planetData.rotationSpeed = planetData.originalRotationSpeed;
+        }
+        if (planetData.originalOrbitalSpeed) {
+            planetData.orbitalSpeed = planetData.originalOrbitalSpeed;
+        }
+    }
+    
+    // 更新UI控件以反映默认速度
+    updateSpeedControlsToDefault();
+    
+    console.log("已恢复默认速度");
+}
+
+// 更新速度控制滑块到默认值
+function updateSpeedControlsToDefault() {
+    const rotationSpeedSlider = document.getElementById('rotation-speed');
+    const orbitalSpeedSlider = document.getElementById('orbital-speed');
+    const rotationSpeedValue = document.getElementById('rotation-speed-value');
+    const orbitalSpeedValue = document.getElementById('orbital-speed-value');
+    
+    if (rotationSpeedSlider && orbitalSpeedSlider) {
+        // 恢复默认值
+        rotationSpeedSlider.value = 1.0;
+        orbitalSpeedSlider.value = 1.0;
+        
+        if (rotationSpeedValue) {
+            rotationSpeedValue.textContent = '1.0';
+        }
+        if (orbitalSpeedValue) {
+            orbitalSpeedValue.textContent = '1.0';
+        }
+        
+        // 更新全局速度乘数
+        rotationSpeedMultiplier = 1.0;
+        orbitalSpeedMultiplier = 1.0;
+        
+        console.log("速度控制已重置为默认值");
+    }
+}
+
 // 设置移动设备特定控制
 function setupMobileControls() {
+    console.log("设置移动设备控制...");
+    
     // 控制面板切换功能
     const toggleControlsBtn = document.getElementById('toggle-controls');
     const infoPanel = document.getElementById('info');
@@ -354,6 +435,186 @@ function setupMobileControls() {
     
     // 设置Hammer.js处理触摸事件
     setupTouchControls();
+    
+    // 设置移动端简化控制按钮
+    setupMobileSimpleControls();
+    
+    // 设置移动端底部聊天框
+    setupMobileChatInterface();
+    
+    // 隐藏画中画视图
+    hidePipViewOnMobile();
+    
+    // 更新速度控制滑块的值，反映减半的速度
+    updateSpeedControlsForMobile();
+}
+
+// 更新移动设备上的速度控制滑块
+function updateSpeedControlsForMobile() {
+    const rotationSpeedSlider = document.getElementById('rotation-speed');
+    const orbitalSpeedSlider = document.getElementById('orbital-speed');
+    const rotationSpeedValue = document.getElementById('rotation-speed-value');
+    const orbitalSpeedValue = document.getElementById('orbital-speed-value');
+    
+    if (rotationSpeedSlider && orbitalSpeedSlider) {
+        // 获取当前值
+        const currentRotationSpeed = parseFloat(rotationSpeedSlider.value);
+        const currentOrbitalSpeed = parseFloat(orbitalSpeedSlider.value);
+        
+        // 设置为减半的值
+        const newRotationSpeed = currentRotationSpeed * MOBILE_SPEED_FACTOR;
+        const newOrbitalSpeed = currentOrbitalSpeed * MOBILE_SPEED_FACTOR;
+        
+        // 更新滑块和显示值
+        rotationSpeedSlider.value = newRotationSpeed.toFixed(1);
+        orbitalSpeedSlider.value = newOrbitalSpeed.toFixed(1);
+        
+        if (rotationSpeedValue) {
+            rotationSpeedValue.textContent = newRotationSpeed.toFixed(1);
+        }
+        if (orbitalSpeedValue) {
+            orbitalSpeedValue.textContent = newOrbitalSpeed.toFixed(1);
+        }
+        
+        // 更新全局速度乘数
+        rotationSpeedMultiplier = newRotationSpeed;
+        orbitalSpeedMultiplier = newOrbitalSpeed;
+        
+        console.log(`移动设备速度控制已更新: 自转=${newRotationSpeed.toFixed(1)}, 公转=${newOrbitalSpeed.toFixed(1)}`);
+    }
+}
+
+// 设置移动端简化控制按钮
+function setupMobileSimpleControls() {
+    // 重置视角按钮
+    const mobileResetViewBtn = document.getElementById('mobile-reset-view');
+    if (mobileResetViewBtn) {
+        mobileResetViewBtn.addEventListener('click', function() {
+            resetCameraControls();
+        });
+    }
+    
+    // 显示/隐藏轨道按钮
+    const mobileToggleOrbitsBtn = document.getElementById('mobile-toggle-orbits');
+    if (mobileToggleOrbitsBtn) {
+        let orbitsVisible = false; // 初始状态为隐藏
+        
+        mobileToggleOrbitsBtn.addEventListener('click', function() {
+            orbitsVisible = !orbitsVisible;
+            updateOrbitsVisibility(orbitsVisible);
+            
+            // 更新按钮文本
+            this.textContent = orbitsVisible ? "隐藏轨道" : "显示轨道";
+        });
+    }
+    
+    // 显示/隐藏标签按钮
+    const mobileToggleLabelsBtn = document.getElementById('mobile-toggle-labels');
+    if (mobileToggleLabelsBtn) {
+        let labelsVisible = false; // 初始状态为隐藏
+        
+        mobileToggleLabelsBtn.addEventListener('click', function() {
+            labelsVisible = !labelsVisible;
+            togglePlanetLabels(labelsVisible);
+            
+            // 更新按钮文本
+            this.textContent = labelsVisible ? "隐藏标签" : "显示标签";
+        });
+    }
+}
+
+// 切换行星标签显示
+function togglePlanetLabels(visible) {
+    // 移除现有标签
+    const existingLabels = document.querySelectorAll('.planet-label');
+    existingLabels.forEach(label => {
+        label.remove();
+    });
+    
+    // 如果需要显示标签，则创建新标签
+    if (visible) {
+        for (const [key, planet] of Object.entries(planets)) {
+            if (key === 'moon') continue; // 跳过月球
+            
+            if (planet && planet.mesh) {
+                createPlanetLabel(key, planet.mesh, planet.data.name);
+            }
+        }
+    }
+}
+
+// 创建行星标签
+function createPlanetLabel(planetKey, planetMesh, planetName) {
+    const label = document.createElement('div');
+    label.className = 'planet-label';
+    label.textContent = planetName;
+    label.style.position = 'absolute';
+    label.style.color = '#ffcc00';
+    label.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    label.style.padding = '2px 5px';
+    label.style.borderRadius = '3px';
+    label.style.fontSize = '12px';
+    label.style.pointerEvents = 'none';
+    label.style.zIndex = '1000';
+    
+    document.body.appendChild(label);
+    
+    // 存储标签引用，以便在动画循环中更新位置
+    if (!window.planetLabels) {
+        window.planetLabels = {};
+    }
+    
+    window.planetLabels[planetKey] = {
+        element: label,
+        mesh: planetMesh
+    };
+}
+
+// 更新行星标签位置
+function updatePlanetLabels() {
+    if (!window.planetLabels) return;
+    
+    for (const [key, labelData] of Object.entries(window.planetLabels)) {
+        const { element, mesh } = labelData;
+        
+        // 将3D位置转换为屏幕坐标
+        const position = new THREE.Vector3();
+        mesh.getWorldPosition(position);
+        
+        position.project(camera);
+        
+        const x = (position.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-position.y * 0.5 + 0.5) * window.innerHeight;
+        
+        // 更新标签位置
+        element.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+        
+        // 根据深度调整透明度
+        const distance = camera.position.distanceTo(mesh.position);
+        const opacity = Math.max(0.2, Math.min(1, 200 / distance));
+        element.style.opacity = opacity;
+        
+        // 如果在屏幕后面，则隐藏
+        if (position.z > 1) {
+            element.style.display = 'none';
+        } else {
+            element.style.display = 'block';
+        }
+    }
+}
+
+// 隐藏移动设备上的画中画视图
+function hidePipViewOnMobile() {
+    const pipView = document.getElementById('pip-view');
+    if (pipView) {
+        pipView.style.display = 'none';
+    }
+    
+    // 禁用PIP相关功能
+    if (pipRenderer) {
+        // 停止PIP渲染以节省性能
+        pipRenderer.setAnimationLoop(null);
+    }
 }
 
 // 全屏模式切换函数
@@ -1263,15 +1524,22 @@ function animate() {
         updateEarthSurfaceView();
     }
     
-    // 更新画中画视图
-    updatePipView();
+    // 更新画中画视图 - 仅在非移动设备上
+    if (!isMobile) {
+        updatePipView();
+    }
+    
+    // 更新行星标签位置
+    if (window.planetLabels) {
+        updatePlanetLabels();
+    }
     
     // 定期检查行星可见性
     if (animationFrame % 120 === 0) { // 每120帧检查一次
         ensurePlanetsVisible();
     }
     
-    // 移动设备渲染优化：修改为每帧都渲染，但可能降低质量
+    // 渲染场景
     renderer.render(scene, camera);
     
     // 记录动画帧
@@ -1386,79 +1654,80 @@ function setupChatFeature() {
     const chatSend = document.getElementById('chat-send');
     const chatMessages = document.getElementById('chat-messages');
     
-    // 添加发送按钮点击事件
+    // 添加欢迎消息
+    addBotMessage("你好！我是DeepSeek-R1，你可以问我关于宇宙和太阳系的问题。");
+    
+    // 桌面端发送消息
     chatSend.addEventListener('click', function() {
         sendChatMessage();
     });
     
-    // 添加输入框回车事件
+    // 按回车键发送消息
     chatInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             sendChatMessage();
         }
     });
     
-    // 添加欢迎消息
-    addBotMessage("你好！我是DeepSeek-R1，你可以问我关于宇宙和太阳系的问题。");
-    
     // 发送聊天消息
     function sendChatMessage() {
         const message = chatInput.value.trim();
         if (message) {
-            // 添加用户消息到聊天框
+            // 添加用户消息
             addUserMessage(message);
             
             // 清空输入框
             chatInput.value = '';
             
             // 获取AI回复
-            getAIResponse(message);
+            getAIResponse(message).then(response => {
+                addBotMessage(response);
+                
+                // 如果在移动设备上，也添加到移动端聊天框
+                if (isMobile) {
+                    const mobileChatMessages = document.getElementById('mobile-chat-messages');
+                    if (mobileChatMessages) {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'chat-message bot-message';
+                        messageDiv.innerHTML = `<strong>DeepSeek: </strong>${response}`;
+                        mobileChatMessages.appendChild(messageDiv);
+                        mobileChatMessages.scrollTop = mobileChatMessages.scrollHeight;
+                    }
+                }
+            });
         }
     }
     
-    // 添加用户消息到聊天框
+    // 添加用户消息
     function addUserMessage(message) {
-        const messageElement = document.createElement('div');
-        messageElement.className = 'chat-message user-message';
-        messageElement.textContent = `你: ${message}`;
-        chatMessages.appendChild(messageElement);
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'chat-message user-message';
+        messageDiv.innerHTML = `<strong>你: </strong>${message}`;
+        chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     
-    // 添加机器人消息到聊天框
+    // 添加机器人消息
     function addBotMessage(message) {
-        const messageElement = document.createElement('div');
-        messageElement.className = 'chat-message bot-message';
-        messageElement.textContent = `DeepSeek: ${message}`;
-        chatMessages.appendChild(messageElement);
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'chat-message bot-message';
+        messageDiv.innerHTML = `<strong>DeepSeek: </strong>${message}`;
+        chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     
     // 获取AI回复
-    function getAIResponse(message) {
-        // 显示加载中消息
-        const loadingElement = document.createElement('div');
-        loadingElement.className = 'chat-message bot-message';
-        loadingElement.textContent = `DeepSeek: 思考中...`;
-        loadingElement.id = 'loading-message';
-        chatMessages.appendChild(loadingElement);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // 模拟AI思考时间
-        setTimeout(() => {
-            // 移除加载消息
-            const loadingMessage = document.getElementById('loading-message');
-            if (loadingMessage) {
-                chatMessages.removeChild(loadingMessage);
-            }
-            
-            // 根据问题提供相关回答
-            const response = generateResponse(message);
-            addBotMessage(response);
-        }, 1000);
+    async function getAIResponse(message) {
+        // 这里可以接入实际的AI接口
+        // 目前使用模拟回复
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve(generateResponse(message));
+            }, 1000);
+        });
     }
     
-    // 生成回复（简单的关键词匹配）
+    // 生成模拟回复
     function generateResponse(message) {
         message = message.toLowerCase();
         
@@ -1559,6 +1828,85 @@ function setupChatFeature() {
         // 默认回复
         else {
             return "这是个有趣的问题！作为一个宇宙知识助手，我可以回答关于太阳系、行星、恒星、黑洞等宇宙天体的问题。你可以尝试问我关于特定行星的信息，或者宇宙的起源与结构等问题。";
+        }
+    }
+}
+
+// 设置移动端底部聊天框
+function setupMobileChatInterface() {
+    const mobileChatContainer = document.getElementById('mobile-chat-container');
+    const mobileChatToggle = document.getElementById('mobile-chat-toggle');
+    const mobileChatInput = document.getElementById('mobile-chat-input');
+    const mobileChatSend = document.getElementById('mobile-chat-send');
+    const mobileChatMessages = document.getElementById('mobile-chat-messages');
+    
+    if (!mobileChatContainer) return;
+    
+    // 添加欢迎消息
+    addMobileChatMessage("你好！我是DeepSeek-R1，你可以问我关于宇宙和太阳系的问题。", 'bot');
+    
+    // 切换聊天框展开/收起状态
+    mobileChatToggle.addEventListener('click', function() {
+        mobileChatContainer.classList.toggle('collapsed');
+        
+        // 更新按钮图标
+        const icon = this.querySelector('i');
+        if (mobileChatContainer.classList.contains('collapsed')) {
+            icon.className = 'fa-solid fa-chevron-up';
+        } else {
+            icon.className = 'fa-solid fa-chevron-down';
+            // 聊天框展开时，聚焦输入框
+            mobileChatInput.focus();
+        }
+    });
+    
+    // 发送消息
+    mobileChatSend.addEventListener('click', function() {
+        sendMobileChatMessage();
+    });
+    
+    // 按回车键发送消息
+    mobileChatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMobileChatMessage();
+        }
+    });
+    
+    // 发送移动端聊天消息
+    function sendMobileChatMessage() {
+        const message = mobileChatInput.value.trim();
+        if (message) {
+            // 添加用户消息
+            addMobileChatMessage(message, 'user');
+            
+            // 清空输入框
+            mobileChatInput.value = '';
+            
+            // 获取AI回复
+            getAIResponse(message).then(response => {
+                addMobileChatMessage(response, 'bot');
+            });
+        }
+    }
+    
+    // 添加消息到移动端聊天框
+    function addMobileChatMessage(message, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${type}-message`;
+        
+        // 添加发送者标识
+        const sender = type === 'user' ? '你: ' : 'DeepSeek: ';
+        messageDiv.innerHTML = `<strong>${sender}</strong>${message}`;
+        
+        // 添加到聊天框
+        mobileChatMessages.appendChild(messageDiv);
+        
+        // 滚动到底部
+        mobileChatMessages.scrollTop = mobileChatMessages.scrollHeight;
+        
+        // 如果聊天框是收起状态，展开它
+        if (mobileChatContainer.classList.contains('collapsed')) {
+            mobileChatToggle.click();
         }
     }
 }

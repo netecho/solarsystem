@@ -365,6 +365,155 @@ input[type="range"]::-moz-range-thumb {
         transition: transform 0.3s ease-in-out;
         transform: translateX(0);
     }
+    
+    /* 隐藏速度控制、视角控制和问答控制 */
+    #controls h3, 
+    #controls .control-group {
+        display: none;
+    }
+    
+    /* 显示简化的控制面板标题 */
+    #controls h3.mobile-visible,
+    #controls .control-group.mobile-visible {
+        display: block;
+    }
+    
+    /* 隐藏画中画视图 */
+    #pip-view {
+        display: none !important;
+    }
+    
+    /* 简化信息面板 */
+    #info {
+        max-width: none;
+        width: auto;
+        padding: 10px;
+    }
+    
+    /* 显示一个简化的移动端控制按钮 */
+    #mobile-simple-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    #mobile-simple-controls button {
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #ffcc00;
+        border: 1px solid #ffcc00;
+        padding: 12px;
+        border-radius: 5px;
+        font-size: 16px;
+        width: 100%;
+    }
+    
+    /* 创建固定在底部的聊天框 */
+    #mobile-chat-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+        z-index: 1000;
+        border-top: 1px solid #ffcc00;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        max-height: 40vh;
+        transition: transform 0.3s ease;
+    }
+    
+    /* 确保不遮挡全屏按钮 */
+    #mobile-fullscreen-toggle {
+        z-index: 1001; /* 确保在聊天框上方 */
+        bottom: 60px; /* 在聊天框标题栏上方 */
+    }
+    
+    /* 聊天框收起状态 */
+    #mobile-chat-container.collapsed {
+        transform: translateY(calc(100% - 40px));
+    }
+    
+    /* 聊天框收起状态下，全屏按钮位置调整 */
+    #mobile-chat-container.collapsed ~ #mobile-fullscreen-toggle {
+        bottom: 10px;
+    }
+    
+    /* 聊天框标题栏 */
+    #mobile-chat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 204, 0, 0.3);
+    }
+    
+    #mobile-chat-header h3 {
+        margin: 0;
+        font-size: 16px;
+        color: #ffcc00;
+    }
+    
+    #mobile-chat-toggle {
+        background: none;
+        border: none;
+        color: #ffcc00;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 0;
+    }
+    
+    /* 聊天消息区域 */
+    #mobile-chat-messages {
+        overflow-y: auto;
+        flex-grow: 1;
+        margin-bottom: 8px;
+        font-size: 14px;
+        max-height: 25vh;
+    }
+    
+    /* 聊天输入区域 */
+    #mobile-chat-input-container {
+        display: flex;
+        gap: 8px;
+    }
+    
+    #mobile-chat-input {
+        flex-grow: 1;
+        background-color: rgba(30, 30, 30, 0.8);
+        border: 1px solid #444;
+        border-radius: 5px;
+        padding: 10px;
+        color: #fff;
+        font-size: 16px;
+        min-height: 44px;
+    }
+    
+    #mobile-chat-send {
+        background-color: #ffcc00;
+        color: #000;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        font-size: 16px;
+        font-weight: bold;
+        min-height: 44px;
+        min-width: 60px;
+    }
+    
+    /* 隐藏原始聊天框 */
+    #controls h3:last-of-type,
+    #chat-container {
+        display: none;
+    }
+    
+    /* 为底部聊天框留出空间 */
+    body {
+        padding-bottom: 50px;
+    }
 }
 
 /* 在桌面端隐藏移动端特定按钮 */
@@ -476,5 +625,44 @@ input[type="range"]::-moz-range-thumb {
     
     #chat-input {
         min-height: 44px;
+    }
+}
+
+/* 桌面端隐藏移动端专用控件 */
+#mobile-simple-controls {
+    display: none;
+}
+
+/* 添加可在移动端显示的类 */
+.mobile-visible {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-visible {
+        display: block;
+    }
+}
+
+/* 行星标签样式 */
+.planet-label {
+    position: absolute;
+    color: #ffcc00;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    transform: translate(-50%, -50%);
+    text-shadow: 0 0 2px #000;
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .planet-label {
+        font-size: 14px;
+        padding: 3px 8px;
     }
 } 

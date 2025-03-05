@@ -17,6 +17,13 @@
         <div id="planet-info">选择一个行星查看详情</div>
         
         <div id="controls">
+            <!-- 移动端简化控制面板 -->
+            <div id="mobile-simple-controls" class="mobile-visible">
+                <button id="mobile-reset-view">重置视角</button>
+                <button id="mobile-toggle-orbits">显示/隐藏轨道</button>
+                <button id="mobile-toggle-labels">显示/隐藏标签</button>
+            </div>
+            
             <h3>速度控制</h3>
             <div class="control-group">
                 <label for="rotation-speed">自转速度: <span id="rotation-speed-value">1.0</span>x</label>
@@ -75,6 +82,19 @@
     
     <!-- 添加移动端全屏按钮 -->
     <button id="mobile-fullscreen-toggle"><i class="fa-solid fa-expand"></i></button>
+    
+    <!-- 移动端底部聊天框 -->
+    <div id="mobile-chat-container" class="mobile-only collapsed">
+        <div id="mobile-chat-header">
+            <h3>宇宙问答</h3>
+            <button id="mobile-chat-toggle"><i class="fa-solid fa-chevron-up"></i></button>
+        </div>
+        <div id="mobile-chat-messages"></div>
+        <div id="mobile-chat-input-container">
+            <input type="text" id="mobile-chat-input" placeholder="问DeepSeek关于宇宙的问题...">
+            <button id="mobile-chat-send">发送</button>
+        </div>
+    </div>
 
     <!-- Three.js库 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
