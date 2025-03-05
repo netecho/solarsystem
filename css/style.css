@@ -251,4 +251,230 @@ input[type="range"]::-moz-range-thumb {
     z-index: 11;
     transform: translate(-50%, -50%);
     box-shadow: 0 0 5px #ff0000;
+}
+
+/* 移动端响应式样式 */
+@media (max-width: 768px) {
+    #info {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+        padding: 15px;
+        overflow-y: auto;
+        max-height: 50vh;
+    }
+    
+    h1 {
+        font-size: 20px;
+    }
+    
+    p {
+        font-size: 13px;
+    }
+    
+    #pip-view {
+        width: 120px;
+        height: 120px;
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .view-button {
+        padding: 10px;
+        font-size: 16px;
+        margin-bottom: 10px;
+        width: 100%;
+        display: block;
+    }
+    
+    input[type="range"] {
+        height: 20px;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+    }
+    
+    #chat-input {
+        padding: 10px;
+        font-size: 16px;
+    }
+    
+    #chat-send {
+        padding: 10px 15px;
+        font-size: 16px;
+    }
+    
+    .control-group label {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    
+    #chat-messages {
+        font-size: 14px;
+    }
+    
+    /* 在移动设备上添加全屏模式切换按钮 */
+    #mobile-fullscreen-toggle {
+        display: block;
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #ffcc00;
+        border: 1px solid #ffcc00;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+        line-height: 50px;
+        text-align: center;
+        z-index: 100;
+        box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+    }
+    
+    /* 移动设备上控制面板切换按钮 */
+    #toggle-controls {
+        display: block;
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #ffcc00;
+        border: 1px solid #ffcc00;
+        padding: 8px 12px;
+        border-radius: 5px;
+        z-index: 100;
+        font-size: 14px;
+    }
+    
+    /* 控制面板在移动设备上的样式 */
+    .controls-collapsed #info {
+        transform: translateX(-110%);
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    #info {
+        transition: transform 0.3s ease-in-out;
+        transform: translateX(0);
+    }
+}
+
+/* 在桌面端隐藏移动端特定按钮 */
+#mobile-fullscreen-toggle, #toggle-controls {
+    display: none;
+}
+
+/* 横屏样式优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+    #info {
+        max-height: 80vh;
+        max-width: 300px;
+        left: 10px;
+        top: 10px;
+        bottom: 10px;
+    }
+}
+
+/* 移动端显示类和桌面端显示类 */
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: inline;
+    }
+    
+    .desktop-only {
+        display: none;
+    }
+}
+
+/* 移动端屏幕方向特定样式 */
+@media (max-width: 768px) and (orientation: portrait) {
+    #info {
+        max-height: 50vh;
+        overflow-y: auto;
+    }
+    
+    .controls-collapsed #info {
+        transform: translateX(-110%);
+    }
+    
+    #mobile-fullscreen-toggle {
+        bottom: 20px;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    #info {
+        max-height: 80vh;
+        max-width: 320px;
+        overflow-y: auto;
+    }
+    
+    .controls-collapsed #info {
+        transform: translateX(-110%);
+    }
+    
+    #mobile-fullscreen-toggle {
+        bottom: 10px;
+    }
+    
+    #pip-view {
+        width: 100px;
+        height: 100px;
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .control-group {
+        margin-bottom: 10px;
+    }
+    
+    h3 {
+        margin: 10px 0 5px;
+    }
+    
+    #chat-container {
+        max-height: 150px;
+    }
+    
+    #chat-messages {
+        max-height: 100px;
+    }
+}
+
+/* 确保触摸屏上的滑块更容易操作 */
+@media (pointer: coarse) {
+    input[type="range"] {
+        height: 25px;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+        width: 25px;
+        height: 25px;
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+    }
+    
+    .view-button, #chat-send {
+        padding: 12px;
+        min-height: 44px;
+    }
+    
+    #chat-input {
+        min-height: 44px;
+    }
 } 

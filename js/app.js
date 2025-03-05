@@ -142,6 +142,13 @@ let timeOfDay = 0; // 一天中的时间（0-24小时）
 let dayNightCycle = true; // 是否启用昼夜循环
 let dayNightCycleSpeed = 0.1; // 昼夜循环速度
 
+// 添加全局变量来控制移动端状态
+let isMobile = false;
+let isFullscreen = false;
+
+// 添加动画帧计数器
+let animationFrame = 0;
+
 // 初始化函数
 function init() {
     // 创建场景
@@ -199,8 +206,18 @@ function init() {
     // 初始化画中画视图（在行星创建之后）
     initPipView();
     
-    // 添加窗口大小调整事件监听器
-    window.addEventListener('resize', onWindowResize, false);
+    // 检测是否为移动设备
+    checkMobileDevice();
+    
+    // 初始化移动设备特定功能
+    if(isMobile) {
+        setupMobileControls();
+        setupPerformanceOptimizations();
+        setupOrientationChangeHandler();
+    }
+    
+    // 设置窗口大小调整监听
+    window.addEventListener('resize', onWindowResize);
     
     // 添加鼠标点击事件
     window.addEventListener('click', onMouseClick, false);
@@ -216,6 +233,139 @@ function init() {
     
     // 开始动画循环
     animate();
+}
+
+// 检测设备类型
+function checkMobileDevice() {
+    isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // 根据设备类型添加类名到body
+    if(isMobile) {
+        document.body.classList.add('mobile-device');
+    } else {
+        document.body.classList.remove('mobile-device');
+    }
+}
+
+// 设置移动设备特定控制
+function setupMobileControls() {
+    // 控制面板切换功能
+    const toggleControlsBtn = document.getElementById('toggle-controls');
+    const infoPanel = document.getElementById('info');
+    
+    toggleControlsBtn.addEventListener('click', function() {
+        document.body.classList.toggle('controls-collapsed');
+        
+        // 更新按钮图标
+        const icon = this.querySelector('i');
+        if(document.body.classList.contains('controls-collapsed')) {
+            icon.className = 'fa-solid fa-bars';
+            toggleControlsBtn.innerHTML = '控制面板 <i class="fa-solid fa-bars"></i>';
+        } else {
+            icon.className = 'fa-solid fa-times';
+            toggleControlsBtn.innerHTML = '关闭面板 <i class="fa-solid fa-times"></i>';
+        }
+    });
+    
+    // 全屏模式切换
+    const fullscreenBtn = document.getElementById('mobile-fullscreen-toggle');
+    
+    fullscreenBtn.addEventListener('click', function() {
+        toggleFullscreen();
+    });
+    
+    // 设置Hammer.js处理触摸事件
+    setupTouchControls();
+}
+
+// 全屏模式切换函数
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+        }
+        isFullscreen = true;
+        document.getElementById('mobile-fullscreen-toggle').innerHTML = '<i class="fa-solid fa-compress"></i>';
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        isFullscreen = false;
+        document.getElementById('mobile-fullscreen-toggle').innerHTML = '<i class="fa-solid fa-expand"></i>';
+    }
+}
+
+// 设置触摸控制
+function setupTouchControls() {
+    const container = document.getElementById('container');
+    const hammer = new Hammer(container);
+    
+    // 启用捏合手势识别
+    hammer.get('pinch').set({ enable: true });
+    hammer.get('rotate').set({ enable: true });
+    
+    // 处理捏合缩放
+    hammer.on('pinchstart', function(e) {
+        initialScale = camera.zoom;
+    });
+    
+    hammer.on('pinch', function(e) {
+        // 根据捏合缩放比例调整相机缩放
+        let newZoom = initialScale * e.scale;
+        newZoom = Math.max(0.5, Math.min(newZoom, 10)); // 限制缩放范围
+        camera.zoom = newZoom;
+        camera.updateProjectionMatrix();
+    });
+    
+    // 处理旋转手势
+    hammer.on('rotatestart', function(e) {
+        initialRotation = {
+            x: controls.getPolarAngle(),
+            y: controls.getAzimuthalAngle()
+        };
+    });
+    
+    hammer.on('rotate', function(e) {
+        // 根据旋转角度调整相机角度
+        const rotationFactor = 0.01;
+        const deltaRotation = e.rotation * rotationFactor;
+        
+        // 应用旋转
+        controls.rotateLeft(deltaRotation);
+        controls.update();
+    });
+    
+    // 处理点击行星
+    hammer.on('tap', function(event) {
+        const x = (event.center.x / window.innerWidth) * 2 - 1;
+        const y = -(event.center.y / window.innerHeight) * 2 + 1;
+        
+        const vector = new THREE.Vector3(x, y, 0.5);
+        vector.unproject(camera);
+        
+        const raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+        const intersects = raycaster.intersectObjects(scene.children, true);
+        
+        if (intersects.length > 0) {
+            const object = intersects[0].object;
+            
+            // 查找行星
+            for (const planetKey in planets) {
+                if (object === planets[planetKey] || object.parent === planets[planetKey]) {
+                    updatePlanetInfo(planetKey);
+                    break;
+                }
+            }
+        }
+    });
 }
 
 // 设置速度控制
@@ -901,14 +1051,26 @@ function updatePipIndicator() {
     pipIndicator.style.top = `${relZ}px`;
 }
 
-// 窗口大小调整处理函数
+// 更新窗口调整函数，增加移动设备检测
 function onWindowResize() {
-    // 更新主相机
+    // 检查设备类型
+    checkMobileDevice();
+    
+    // 如果设备类型发生变化，重新应用相应的设置
+    if(isMobile && !document.body.classList.contains('mobile-device')) {
+        setupMobileControls();
+    }
+    
+    // 更新相机和渲染器
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     
-    // 不需要调整画中画视图大小，它是固定的
+    // 更新画中画视图
+    if(pipRenderer) {
+        const pipSize = isMobile ? 120 : 200;
+        pipRenderer.setSize(pipSize, pipSize);
+    }
 }
 
 // 鼠标点击处理函数
@@ -972,8 +1134,13 @@ function animate() {
     // 更新画中画视图
     updatePipView();
     
-    // 渲染场景
-    renderer.render(scene, camera);
+    // 性能优化：在移动设备上降低渲染频率
+    if (!isMobile || animationFrame % 2 === 0) { // 在移动设备上每两帧渲染一次
+        renderer.render(scene, camera);
+    }
+    
+    // 记录动画帧
+    animationFrame = (animationFrame + 1) || 0;
 }
 
 // 更新地球表面视角
@@ -1410,6 +1577,65 @@ function updateSunPosition() {
     
     // 调试信息
     console.log(`时间: ${timeOfDay.toFixed(2)}时, 本地时间: ${localTime.toFixed(2)}时, 太阳高度角: ${(sunElevation * 180/Math.PI).toFixed(2)}°, 方位角: ${(sunAzimuth * 180/Math.PI).toFixed(2)}°`);
+}
+
+// 为移动设备添加性能优化
+function setupPerformanceOptimizations() {
+    if (isMobile) {
+        // 降低渲染质量
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        
+        // 减少行星轨道细节
+        scene.children.forEach(child => {
+            if (child.name && child.name.includes('orbit')) {
+                child.visible = false; // 在移动设备上隐藏轨道以提高性能
+            }
+        });
+        
+        // 降低星空粒子数量
+        if (starField && starField.geometry && starField.geometry.attributes.position) {
+            const positions = starField.geometry.attributes.position.array;
+            const count = starField.geometry.attributes.position.count;
+            
+            // 只使用一半的星星以提高性能
+            for (let i = 0; i < count; i += 2) {
+                const idx = i * 3;
+                positions[idx] = 0;
+                positions[idx + 1] = 0;
+                positions[idx + 2] = 0;
+            }
+            
+            starField.geometry.attributes.position.needsUpdate = true;
+        }
+    }
+}
+
+// 添加屏幕方向变化监听
+function setupOrientationChangeHandler() {
+    window.addEventListener('orientationchange', function() {
+        // 延迟一小段时间以确保尺寸已经改变
+        setTimeout(() => {
+            onWindowResize();
+            
+            // 根据屏幕方向进行额外调整
+            if (window.orientation === 90 || window.orientation === -90) {
+                // 横屏模式
+                document.body.classList.add('landscape');
+                document.body.classList.remove('portrait');
+            } else {
+                // 竖屏模式
+                document.body.classList.add('portrait');
+                document.body.classList.remove('landscape');
+            }
+        }, 300);
+    });
+    
+    // 初始检查
+    if (window.orientation === 90 || window.orientation === -90) {
+        document.body.classList.add('landscape');
+    } else {
+        document.body.classList.add('portrait');
+    }
 }
 
 // 启动应用

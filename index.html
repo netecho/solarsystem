@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>太阳系3D模拟</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- 添加移动端控制面板开关按钮 -->
+    <button id="toggle-controls">控制面板 <i class="fa-solid fa-bars"></i></button>
+    
     <div id="info">
         <h1>太阳系3D模拟</h1>
-        <p>使用鼠标拖动可旋转视图，滚轮可缩放</p>
+        <p>使用鼠标拖动可旋转视图，滚轮可缩放<span class="mobile-only">，触摸可平移</span></p>
         <div id="planet-info">选择一个行星查看详情</div>
         
         <div id="controls">
@@ -68,10 +72,16 @@
     
     <!-- 添加画中画视图 -->
     <div id="pip-view"></div>
+    
+    <!-- 添加移动端全屏按钮 -->
+    <button id="mobile-fullscreen-toggle"><i class="fa-solid fa-expand"></i></button>
 
     <!-- Three.js库 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- Hammer.js用于处理移动端触摸事件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     
     <!-- 自定义脚本 -->
     <script src="js/app.js"></script>
