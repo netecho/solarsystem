@@ -1,1 +1,1 @@
-# solarsystem.github.io
+# solarsystem
