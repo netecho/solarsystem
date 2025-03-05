@@ -4,6 +4,39 @@
 // 纹理加载器
 const textureLoader = new THREE.TextureLoader();
 
+// 添加纹理加载错误处理
+textureLoader.crossOrigin = 'anonymous';
+
+// 安全加载纹理的辅助函数
+function loadTextureWithFallback(url, fallbackColor) {
+    return new Promise((resolve) => {
+        textureLoader.load(
+            url,
+            // 成功加载时
+            (texture) => {
+                console.log(`纹理加载成功: ${url}`);
+                resolve(texture);
+            },
+            // 加载进度时
+            undefined,
+            // 加载失败时
+            (err) => {
+                console.warn(`纹理加载失败: ${url}`, err);
+                // 创建一个纯色纹理作为后备
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                const context = canvas.getContext('2d');
+                context.fillStyle = `#${fallbackColor.toString(16).padStart(6, '0')}`;
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const fallbackTexture = new THREE.CanvasTexture(canvas);
+                resolve(fallbackTexture);
+            }
+        );
+    });
+}
+
 // 行星数据（相对比例，非真实比例）
 const PLANET_DATA = {
     sun: {
@@ -46,9 +79,9 @@ const PLANET_DATA = {
         orbitalSpeed: 0.01,
         tilt: 23.4,
         details: "我们的家园，太阳系中唯一已知存在生命的行星。表面71%被水覆盖，有氧气丰富的大气层。",
-        texture: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
-        bumpMap: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg',
-        specularMap: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg',
+        texture: 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',
+        bumpMap: 'https://threejs.org/examples/textures/planets/earth_normal_2048.jpg',
+        specularMap: 'https://threejs.org/examples/textures/planets/earth_specular_2048.jpg',
         hasTexture: true,
         hasMoon: true // 添加标记表示地球有卫星
     },
@@ -61,8 +94,8 @@ const PLANET_DATA = {
         orbitalSpeed: 0.04, // 月球绕地球公转速度
         tilt: 6.7, // 月球轨道倾角
         details: "地球唯一的自然卫星，直径约3,474公里。月球表面布满陨石坑，没有大气层。",
-        texture: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg',
-        bumpMap: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_bump.jpg',
+        texture: 'https://threejs.org/examples/textures/planets/moon_1024.jpg',
+        bumpMap: 'https://threejs.org/examples/textures/planets/moon_bump_1024.jpg',
         hasTexture: true
     },
     mars: {
@@ -122,6 +155,7 @@ let scene, camera, renderer, controls;
 let planets = {};
 let rings = {};
 let orbits = {};
+let starField; // 星空背景全局引用
 let selectedPlanet = null;
 let rotationSpeedMultiplier = 1.0;
 let orbitalSpeedMultiplier = 1.0;
@@ -151,6 +185,8 @@ let animationFrame = 0;
 
 // 初始化函数
 function init() {
+    console.log("初始化应用...");
+    
     // 创建场景
     scene = new THREE.Scene();
     
@@ -164,8 +200,12 @@ function init() {
     camera.position.z = defaultCameraPosition.z;
     camera.position.y = defaultCameraPosition.y;
     
-    // 创建渲染器
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    // 创建渲染器并确保移动端兼容性
+    renderer = new THREE.WebGLRenderer({ 
+        antialias: window.innerWidth > 768, // 仅在非移动设备上使用抗锯齿
+        powerPreference: "high-performance",
+        alpha: false
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000);
     document.getElementById('container').appendChild(renderer.domElement);
@@ -189,10 +229,15 @@ function init() {
         // 注意：hasInteracted标志不会重置，一旦用户交互过，它就会保持为true
     });
     
-    // 添加星空背景
-    createStars();
+    // 检测是否为移动设备 - 提前检测设备类型
+    checkMobileDevice();
     
-    // 添加行星
+    console.log("创建星空背景...");
+    // 添加星空背景 - 只创建一次
+    starField = createStars();
+    
+    console.log("创建行星...");
+    // 添加行星 - 只创建一次
     createPlanets();
     
     // 添加环境光
@@ -206,13 +251,29 @@ function init() {
     // 初始化画中画视图（在行星创建之后）
     initPipView();
     
-    // 检测是否为移动设备
-    checkMobileDevice();
-    
     // 初始化移动设备特定功能
     if(isMobile) {
+        console.log("设置移动设备特定功能...");
         setupMobileControls();
-        setupPerformanceOptimizations();
+        
+        // 确保starField已经创建
+        if (!starField) {
+            console.log("警告: starField未定义，重新创建...");
+            starField = createStars();
+        }
+        
+        // 移动设备性能优化 - 使用延迟确保所有对象已创建
+        setTimeout(() => {
+            console.log("应用移动设备性能优化...");
+            setupPerformanceOptimizations();
+        }, 1000);
+        
+        // 添加额外的确认步骤来验证移动设备上的3D对象
+        setTimeout(() => {
+            console.log("验证移动设备渲染...");
+            verifyMobileRendering();
+        }, 2000);
+        
         setupOrientationChangeHandler();
     }
     
@@ -231,20 +292,37 @@ function init() {
     // 设置聊天功能
     setupChatFeature();
     
-    // 开始动画循环
+    // 启动动画循环
     animate();
+    
+    console.log("初始化完成");
 }
 
 // 检测设备类型
 function checkMobileDevice() {
+    // 检测移动设备
     isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     // 根据设备类型添加类名到body
     if(isMobile) {
         document.body.classList.add('mobile-device');
+        
+        // 确保渲染器和场景已正确配置
+        if (renderer) {
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // 确保摄像机配置正确
+        if (camera) {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        }
     } else {
         document.body.classList.remove('mobile-device');
     }
+    
+    return isMobile;
 }
 
 // 设置移动设备特定控制
@@ -728,16 +806,24 @@ function createStars() {
     }
     
     starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
-    const starField = new THREE.Points(starsGeometry, starsMaterial);
+    starField = new THREE.Points(starsGeometry, starsMaterial); // 使用全局变量
+    starField.name = "starField"; // 添加名称以便标识
     scene.add(starField);
+    
+    console.log("星空背景已创建");
+    return starField; // 返回创建的星空对象
 }
 
 // 创建行星
 function createPlanets() {
+    console.log("开始创建行星...");
+    
     // 遍历行星数据创建每个行星
     for (const [key, data] of Object.entries(PLANET_DATA)) {
         // 跳过月球，因为它会作为地球的卫星创建
         if (key === 'moon') continue;
+        
+        console.log(`创建行星: ${key}`);
         
         // 创建行星几何体和材质
         const geometry = new THREE.SphereGeometry(data.radius, 32, 32);
@@ -747,26 +833,44 @@ function createPlanets() {
             // 太阳使用自发光材质
             material = new THREE.MeshBasicMaterial({ color: data.color });
         } else if (data.hasTexture) {
-            // 使用纹理贴图的行星
-            const texture = textureLoader.load(data.texture);
-            
-            // 创建带纹理的材质
-            material = new THREE.MeshPhongMaterial({ 
-                map: texture,
-                shininess: 5
-            });
-            
-            // 如果有凹凸贴图，添加它
-            if (data.bumpMap) {
-                const bumpTexture = textureLoader.load(data.bumpMap);
-                material.normalMap = bumpTexture;
-                material.normalScale = new THREE.Vector2(0.05, 0.05);
-            }
-            
-            // 如果有高光贴图，添加它
-            if (data.specularMap) {
-                const specularTexture = textureLoader.load(data.specularMap);
-                material.specularMap = specularTexture;
+            // 使用纹理贴图的行星 - 使用安全加载方式
+            try {
+                // 先创建基本材质
+                material = new THREE.MeshPhongMaterial({ 
+                    color: data.color,
+                    shininess: 5
+                });
+                
+                // 异步加载纹理
+                loadTextureWithFallback(data.texture, data.color).then(texture => {
+                    material.map = texture;
+                    material.needsUpdate = true;
+                });
+                
+                // 如果有凹凸贴图，添加它
+                if (data.bumpMap) {
+                    loadTextureWithFallback(data.bumpMap, 0x888888).then(bumpTexture => {
+                        material.normalMap = bumpTexture;
+                        material.normalScale = new THREE.Vector2(0.05, 0.05);
+                        material.needsUpdate = true;
+                    });
+                }
+                
+                // 如果有高光贴图，添加它
+                if (data.specularMap) {
+                    loadTextureWithFallback(data.specularMap, 0x444444).then(specularTexture => {
+                        material.specularMap = specularTexture;
+                        material.needsUpdate = true;
+                    });
+                }
+            } catch (error) {
+                console.error(`加载行星 ${key} 纹理时出错:`, error);
+                // 出错时使用基本材质
+                material = new THREE.MeshStandardMaterial({ 
+                    color: data.color,
+                    roughness: 0.7,
+                    metalness: 0.2
+                });
             }
         } else {
             // 其他行星使用标准材质
@@ -779,6 +883,7 @@ function createPlanets() {
         
         // 创建行星网格
         const planet = new THREE.Mesh(geometry, material);
+        planet.name = key; // 添加名称以便识别
         
         // 设置行星位置
         planet.position.x = data.distance;
@@ -796,6 +901,8 @@ function createPlanets() {
             orbitAngle: Math.random() * Math.PI * 2 // 随机初始位置
         };
         
+        console.log(`行星 ${key} 已添加到场景, 位置: ${planet.position.x}, ${planet.position.y}, ${planet.position.z}`);
+        
         // 为土星添加光环
         if (key === 'saturn') {
             createSaturnRings(planet, data.radius);
@@ -811,6 +918,8 @@ function createPlanets() {
             createMoon(planet, data);
         }
     }
+    
+    console.log("行星创建完成，当前行星对象:", planets);
 }
 
 // 创建土星环
@@ -870,21 +979,41 @@ function createOrbit(radius) {
 
 // 创建月球
 function createMoon(planet, planetData) {
+    console.log("创建月球...");
     const moonData = PLANET_DATA.moon;
     const geometry = new THREE.SphereGeometry(moonData.radius, 32, 32);
     
     let material;
     if (moonData.hasTexture) {
-        const texture = textureLoader.load(moonData.texture);
-        material = new THREE.MeshPhongMaterial({ 
-            map: texture,
-            shininess: 5
-        });
-        
-        if (moonData.bumpMap) {
-            const bumpTexture = textureLoader.load(moonData.bumpMap);
-            material.normalMap = bumpTexture;
-            material.normalScale = new THREE.Vector2(0.05, 0.05);
+        try {
+            // 先创建基本材质
+            material = new THREE.MeshPhongMaterial({ 
+                color: moonData.color,
+                shininess: 5
+            });
+            
+            // 异步加载纹理
+            loadTextureWithFallback(moonData.texture, moonData.color).then(texture => {
+                material.map = texture;
+                material.needsUpdate = true;
+            });
+            
+            // 如果有凹凸贴图，添加它
+            if (moonData.bumpMap) {
+                loadTextureWithFallback(moonData.bumpMap, 0x888888).then(bumpTexture => {
+                    material.normalMap = bumpTexture;
+                    material.normalScale = new THREE.Vector2(0.05, 0.05);
+                    material.needsUpdate = true;
+                });
+            }
+        } catch (error) {
+            console.error("加载月球纹理时出错:", error);
+            // 出错时使用基本材质
+            material = new THREE.MeshStandardMaterial({ 
+                color: moonData.color,
+                roughness: 0.7,
+                metalness: 0.2
+            });
         }
     } else {
         material = new THREE.MeshStandardMaterial({ 
@@ -895,6 +1024,7 @@ function createMoon(planet, planetData) {
     }
     
     const moon = new THREE.Mesh(geometry, material);
+    moon.name = "moon"; // 添加名称以便识别
     
     // 设置月球初始位置（在行星右侧）
     moon.position.x = moonData.distance;
@@ -911,6 +1041,8 @@ function createMoon(planet, planetData) {
         data: moonData,
         orbitAngle: Math.random() * Math.PI * 2 // 随机初始位置
     };
+    
+    console.log("月球已创建");
     
     // 创建月球轨道
     createMoonOrbit(planet, moonData.distance);
@@ -1134,10 +1266,13 @@ function animate() {
     // 更新画中画视图
     updatePipView();
     
-    // 性能优化：在移动设备上降低渲染频率
-    if (!isMobile || animationFrame % 2 === 0) { // 在移动设备上每两帧渲染一次
-        renderer.render(scene, camera);
+    // 定期检查行星可见性
+    if (animationFrame % 120 === 0) { // 每120帧检查一次
+        ensurePlanetsVisible();
     }
+    
+    // 移动设备渲染优化：修改为每帧都渲染，但可能降低质量
+    renderer.render(scene, camera);
     
     // 记录动画帧
     animationFrame = (animationFrame + 1) || 0;
@@ -1197,6 +1332,12 @@ function updatePlanets() {
     
     // 更新所有行星
     for (const [key, planet] of Object.entries(planets)) {
+        // 确保行星mesh存在并可见
+        if (!planet || !planet.mesh) continue;
+        
+        // 确保行星可见
+        planet.mesh.visible = true;
+        
         const data = planet.data;
         
         // 自转 (应用速度乘数)
@@ -1223,36 +1364,18 @@ function updatePlanets() {
         }
     }
     
-    // 更新月球位置
-    if (planets.moon) {
-        const moon = planets.moon;
-        const moonData = moon.data;
-        
-        // 更新月球轨道角度
-        moon.orbitAngle += moonData.orbitalSpeed * orbitalSpeedMultiplier;
-        
-        // 计算月球相对于地球的新位置
-        const x = Math.cos(moon.orbitAngle) * moonData.distance;
-        const z = Math.sin(moon.orbitAngle) * moonData.distance;
-        
-        // 更新月球位置
-        moon.mesh.position.x = x;
-        moon.mesh.position.z = z;
-        
-        // 月球自转
-        moon.mesh.rotation.y += moonData.rotationSpeed * rotationSpeedMultiplier;
+    // 定期检查所有行星可见性（每60帧检查一次）
+    if (animationFrame % 60 === 0) {
+        ensurePlanetsVisible();
     }
-    
-    // 如果是地球视角，调整场景使地球保持在中心
-    if (isEarthView && planets['earth']) {
-        const newEarthPosition = planets['earth'].mesh.position.clone();
-        const offset = newEarthPosition.clone().sub(earthPosition);
-        
-        // 移动所有行星（包括太阳）以保持地球在原位置
-        for (const [key, planet] of Object.entries(planets)) {
-            if (key !== 'earth' && key !== 'moon') {
-                planet.mesh.position.sub(offset);
-            }
+}
+
+// 添加确保行星可见的辅助函数
+function ensurePlanetsVisible() {
+    for (const [key, planet] of Object.entries(planets)) {
+        if (planet && planet.mesh && !planet.mesh.visible) {
+            console.log(`行星 ${key} 不可见，正在修复...`);
+            planet.mesh.visible = true;
         }
     }
 }
@@ -1582,31 +1705,95 @@ function updateSunPosition() {
 // 为移动设备添加性能优化
 function setupPerformanceOptimizations() {
     if (isMobile) {
-        // 降低渲染质量
+        console.log("应用移动设备性能优化");
+        
+        // 降低渲染质量但保持基本功能
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         
-        // 减少行星轨道细节
+        // 仅隐藏轨道，不隐藏行星
         scene.children.forEach(child => {
+            // 只处理轨道对象，确保行星可见
             if (child.name && child.name.includes('orbit')) {
-                child.visible = false; // 在移动设备上隐藏轨道以提高性能
+                child.visible = false; // 只隐藏轨道来提高性能
             }
         });
         
-        // 降低星空粒子数量
+        // 查找星空对象（如果全局变量未定义）
+        if (!starField) {
+            console.log("全局starField未定义，尝试在场景中查找...");
+            scene.children.forEach(child => {
+                if (child.name === "starField") {
+                    starField = child;
+                    console.log("在场景中找到starField");
+                }
+            });
+            
+            // 如果仍未找到，创建一个新的
+            if (!starField) {
+                console.log("未找到starField，创建新的星空背景");
+                starField = createStars();
+            }
+        }
+        
+        // 减少恒星数量但不完全移除
         if (starField && starField.geometry && starField.geometry.attributes.position) {
             const positions = starField.geometry.attributes.position.array;
             const count = starField.geometry.attributes.position.count;
             
-            // 只使用一半的星星以提高性能
-            for (let i = 0; i < count; i += 2) {
+            // 只减少1/8的星星而不是之前的一半
+            for (let i = 0; i < count; i += 8) {
                 const idx = i * 3;
-                positions[idx] = 0;
-                positions[idx + 1] = 0;
-                positions[idx + 2] = 0;
+                // 将部分星星移到较远距离而不是完全移除
+                positions[idx] *= 5;
+                positions[idx + 1] *= 5;
+                positions[idx + 2] *= 5;
             }
             
             starField.geometry.attributes.position.needsUpdate = true;
+            starField.visible = true; // 确保星空可见
+        } else {
+            console.log("无法优化星空：starField对象不完整", starField);
         }
+        
+        // 输出所有行星信息用于调试
+        console.log("行星对象结构:", planets);
+        
+        // 确保太阳和所有行星都是可见的
+        for (const planetKey in planets) {
+            const planet = planets[planetKey];
+            console.log(`检查行星 ${planetKey}:`, planet);
+            
+            if (planet && planet.mesh) {
+                planet.mesh.visible = true;
+                console.log(`确保行星可见: ${planetKey}`);
+            } else if (planet && planet.hasOwnProperty('children')) {
+                // 如果是分组对象，遍历其子对象
+                planet.children.forEach(child => {
+                    child.visible = true;
+                });
+                console.log(`确保行星组可见: ${planetKey}`);
+            } else {
+                console.log(`行星结构不正确: ${planetKey}`, planet);
+            }
+        }
+        
+        // 特别确保太阳可见
+        if (planets['sun']) {
+            if (planets['sun'].mesh) {
+                planets['sun'].mesh.visible = true;
+                console.log("确保太阳可见 (mesh)");
+            } else {
+                console.log("太阳对象结构:", planets['sun']);
+            }
+        } else {
+            console.log("太阳对象不存在");
+        }
+        
+        // 检查场景中所有对象
+        console.log("场景中所有对象:");
+        scene.children.forEach((child, index) => {
+            console.log(`对象 ${index}:`, child.name || "未命名", child.visible);
+        });
     }
 }
 
@@ -1636,6 +1823,58 @@ function setupOrientationChangeHandler() {
     } else {
         document.body.classList.add('portrait');
     }
+}
+
+// 添加验证移动设备渲染的函数
+function verifyMobileRendering() {
+    console.log("验证移动设备渲染...");
+    
+    // 验证场景中是否有对象
+    if (scene.children.length === 0) {
+        console.error("场景中没有对象!");
+        // 尝试重新创建
+        createStars();
+        createPlanets();
+        return;
+    }
+    
+    // 验证行星是否存在和可见
+    let planetCount = 0;
+    let visiblePlanetCount = 0;
+    
+    for (const planetKey in planets) {
+        planetCount++;
+        if (planets[planetKey] && planets[planetKey].mesh) {
+            if (planets[planetKey].mesh.visible) {
+                visiblePlanetCount++;
+            } else {
+                console.log(`行星 ${planetKey} 不可见，正在修复...`);
+                planets[planetKey].mesh.visible = true;
+            }
+        } else {
+            console.error(`行星 ${planetKey} 未正确初始化`);
+        }
+    }
+    
+    console.log(`场景中有 ${scene.children.length} 个对象，${planetCount} 个行星，${visiblePlanetCount} 个可见行星`);
+    
+    // 验证渲染器和相机
+    if (!renderer || !camera) {
+        console.error("渲染器或相机未初始化!");
+        return;
+    }
+    
+    // 确保渲染器尺寸正确
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // 确保相机参数正确
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    
+    // 强制立即渲染
+    renderer.render(scene, camera);
+    
+    console.log("移动设备渲染验证完成");
 }
 
 // 启动应用
