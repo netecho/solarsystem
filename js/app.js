@@ -805,6 +805,7 @@ function setupViewControls() {
             }
             starField.visible = true;
 
+
             // 重置交互标志，以便视角能够自动更新
             controls.hasInteracted = false;
         }
