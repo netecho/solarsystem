@@ -646,6 +646,10 @@ function toggleFullscreen() {
 function setupTouchControls() {
     const container = document.getElementById('container');
     const hammer = new Hammer(container);
+
+    // 在闭包中保存初始缩放和旋转值，避免污染全局作用域
+    let initialScale = 1;
+    let initialRotation = { x: 0, y: 0 };
     
     // 启用捏合手势识别
     hammer.get('pinch').set({ enable: true });
@@ -691,14 +695,17 @@ function setupTouchControls() {
         vector.unproject(camera);
         
         const raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
-        const intersects = raycaster.intersectObjects(scene.children, true);
+        // 仅与行星网格进行射线检测，避免其他对象干扰
+        const planetMeshes = Object.values(planets).map(p => p.mesh);
+        const intersects = raycaster.intersectObjects(planetMeshes, true);
         
         if (intersects.length > 0) {
             const object = intersects[0].object;
             
             // 查找行星
             for (const planetKey in planets) {
-                if (object === planets[planetKey] || object.parent === planets[planetKey]) {
+                const planetMesh = planets[planetKey].mesh;
+                if (object === planetMesh || object.parent === planetMesh) {
                     updatePlanetInfo(planetKey);
                     break;
                 }
