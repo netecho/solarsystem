@@ -24,3 +24,18 @@ This project provides a simple 3D visualization of the solar system built with [
 Use your mouse (or touch on mobile) to rotate, zoom and explore the planets. Additional controls are available in the on-screen panel.
 
 Enjoy exploring the solar system!
+=======
+# solarsystem
+
+## Running tests
+
+A validation script ensures `index.html` parses correctly and that any local
+asset references exist. Run it with:
+
+```bash
+python3 validate_html.py
+```
+
+The same script runs automatically in CI when you open a pull request or push
+changes.
+
