@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - '**/*.html'
+      - '**/*.py'
+      - '.github/workflows/**'
+      - 'README.md'
+  pull_request:
+    paths:
+      - '**/*.html'
+      - '**/*.py'
+      - '.github/workflows/**'
+      - 'README.md'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate HTML
+        run: python3 validate_html.py
