@@ -796,10 +796,15 @@ function setupViewControls() {
                 planets['earth'].mesh.visible = true;
             }
 
-            // 确保星空重新可见
-            if (starField) {
-                starField.visible = true;
+            // 确保星空重新可见并重新添加到场景（防止被意外移除）
+            if (!starField) {
+                starField = createStars();
             }
+            if (scene.getObjectByName('starField') === undefined) {
+                scene.add(starField);
+            }
+            starField.visible = true;
+
 
             // 重置交互标志，以便视角能够自动更新
             controls.hasInteracted = false;
