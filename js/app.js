@@ -790,12 +790,17 @@ function setupViewControls() {
             
             // 重置相机位置（确保相机不在太阳内部）
             resetCameraControls();
-            
+
             // 恢复地球可见性
             if (planets['earth'] && planets['earth'].mesh) {
                 planets['earth'].mesh.visible = true;
             }
-            
+
+            // 确保星空重新可见
+            if (starField) {
+                starField.visible = true;
+            }
+
             // 重置交互标志，以便视角能够自动更新
             controls.hasInteracted = false;
         }
