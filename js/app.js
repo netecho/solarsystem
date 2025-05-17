@@ -2233,4 +2233,4 @@ function verifyMobileRendering() {
 }
 
 // 启动应用
-window.onload = init; 
+window.onload = init;
