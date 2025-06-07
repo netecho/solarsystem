@@ -1276,8 +1276,6 @@ function createPlanets() {
                     material.map = texture;
                     material.needsUpdate = true;
                     console.log(`行星 ${key} 主纹理已成功应用`);
-                }).catch(error => {
-                    console.error(`加载行星 ${key} 主纹理失败:`, error);
                 });
                 
                 // 如果有凹凸贴图，添加它
@@ -1288,8 +1286,6 @@ function createPlanets() {
                         material.normalScale = new THREE.Vector2(0.05, 0.05);
                         material.needsUpdate = true;
                         console.log(`行星 ${key} 凹凸贴图已应用`);
-                    }).catch(error => {
-                        console.error(`加载行星 ${key} 凹凸贴图失败:`, error);
                     });
                 }
                 
@@ -1300,8 +1296,6 @@ function createPlanets() {
                         material.specularMap = specularTexture;
                         material.needsUpdate = true;
                         console.log(`行星 ${key} 高光贴图已应用`);
-                    }).catch(error => {
-                        console.error(`加载行星 ${key} 高光贴图失败:`, error);
                     });
                 }
             } catch (error) {
