@@ -646,6 +646,10 @@ function toggleFullscreen() {
 function setupTouchControls() {
     const container = document.getElementById('container');
     const hammer = new Hammer(container);
+
+    // 在闭包中保存初始缩放和旋转值，避免污染全局作用域
+    let initialScale = 1;
+    let initialRotation = { x: 0, y: 0 };
     
     // 启用捏合手势识别
     hammer.get('pinch').set({ enable: true });
@@ -691,14 +695,17 @@ function setupTouchControls() {
         vector.unproject(camera);
         
         const raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
-        const intersects = raycaster.intersectObjects(scene.children, true);
+        // 仅与行星网格进行射线检测，避免其他对象干扰
+        const planetMeshes = Object.values(planets).map(p => p.mesh);
+        const intersects = raycaster.intersectObjects(planetMeshes, true);
         
         if (intersects.length > 0) {
             const object = intersects[0].object;
             
             // 查找行星
             for (const planetKey in planets) {
-                if (object === planets[planetKey] || object.parent === planets[planetKey]) {
+                const planetMesh = planets[planetKey].mesh;
+                if (object === planetMesh || object.parent === planetMesh) {
                     updatePlanetInfo(planetKey);
                     break;
                 }
@@ -783,12 +790,22 @@ function setupViewControls() {
             
             // 重置相机位置（确保相机不在太阳内部）
             resetCameraControls();
-            
+
             // 恢复地球可见性
             if (planets['earth'] && planets['earth'].mesh) {
                 planets['earth'].mesh.visible = true;
             }
-            
+
+            // 确保星空重新可见并重新添加到场景（防止被意外移除）
+            if (!starField) {
+                starField = createStars();
+            }
+            if (scene.getObjectByName('starField') === undefined) {
+                scene.add(starField);
+            }
+            starField.visible = true;
+
+
             // 重置交互标志，以便视角能够自动更新
             controls.hasInteracted = false;
         }
@@ -2226,4 +2243,4 @@ function verifyMobileRendering() {
 }
 
 // 启动应用
-window.onload = init; 
+window.onload = init;
