@@ -741,7 +741,7 @@ function setupViewControls() {
         
         if (isEarthView) {
             // 切换到地球视角
-            this.textContent = '切换到太阳视角';
+            this.textContent = '切换到初始视角';
             this.classList.add('active');
             
             // 显示地球视角控制面板
@@ -762,7 +762,7 @@ function setupViewControls() {
             // 立即更新太阳位置
             updateSunPosition();
         } else {
-            // 切换回太阳视角
+            // 切换到初始视角
             this.textContent = '切换到地球视角';
             this.classList.remove('active');
             
