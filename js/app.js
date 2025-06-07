@@ -133,9 +133,18 @@ function createFallbackTexture(fallbackColor, resolve) {
             const x = Math.random() * canvas.width;
             const y = Math.random() * canvas.height;
             const brightness = Math.random() * 0.3 - 0.15;
-            const color = Math.floor((fallbackColor & 0xff) * (1 + brightness));
             
-            context.fillStyle = `rgb(${color}, ${color}, ${color})`;
+            // 正确提取RGB分量
+            const r = Math.floor(((fallbackColor >> 16) & 0xff) * (1 + brightness));
+            const g = Math.floor(((fallbackColor >> 8) & 0xff) * (1 + brightness));
+            const b = Math.floor((fallbackColor & 0xff) * (1 + brightness));
+            
+            // 确保颜色值在有效范围内
+            const clampedR = Math.max(0, Math.min(255, r));
+            const clampedG = Math.max(0, Math.min(255, g));
+            const clampedB = Math.max(0, Math.min(255, b));
+            
+            context.fillStyle = `rgb(${clampedR}, ${clampedG}, ${clampedB})`;
             context.fillRect(x, y, 1, 1);
         }
     }
