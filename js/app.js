@@ -2420,6 +2420,9 @@ function reloadEarthTexture() {
     const earth = planets['earth'].mesh;
     const earthData = PLANET_DATA.earth;
     
+    // 保存旧材质的引用以便后续处理
+    const oldMaterial = earth.material;
+    
     // 创建新的材质
     const newMaterial = new THREE.MeshPhongMaterial({ 
         color: earthData.color,
@@ -2431,10 +2434,21 @@ function reloadEarthTexture() {
     loadTextureWithFallback(textureUrl, earthData.color).then(texture => {
         newMaterial.map = texture;
         newMaterial.needsUpdate = true;
+        
+        // 替换材质并处理旧材质
         earth.material = newMaterial;
+        
+        // 正确释放旧材质资源
+        if (oldMaterial) {
+            // 释放旧材质的纹理
+            if (oldMaterial.map) oldMaterial.map.dispose();
+            if (oldMaterial.normalMap) oldMaterial.normalMap.dispose();
+            if (oldMaterial.specularMap) oldMaterial.specularMap.dispose();
+            // 释放材质本身
+            oldMaterial.dispose();
+        }
+        
         console.log("地球主纹理重新加载成功");
-    }).catch(error => {
-        console.error("重新加载地球主纹理失败:", error);
     });
     
     // 重新加载凹凸贴图
@@ -2445,8 +2459,6 @@ function reloadEarthTexture() {
             newMaterial.normalScale = new THREE.Vector2(0.05, 0.05);
             newMaterial.needsUpdate = true;
             console.log("地球凹凸贴图重新加载成功");
-        }).catch(error => {
-            console.error("重新加载地球凹凸贴图失败:", error);
         });
     }
     
@@ -2457,8 +2469,6 @@ function reloadEarthTexture() {
             newMaterial.specularMap = specularTexture;
             newMaterial.needsUpdate = true;
             console.log("地球高光贴图重新加载成功");
-        }).catch(error => {
-            console.error("重新加载地球高光贴图失败:", error);
         });
     }
 }
