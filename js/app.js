@@ -13,11 +13,14 @@ const MOBILE_SPEED_FACTOR = 0.5; // 移动设备上速度减半
 // 安全加载纹理的辅助函数
 function loadTextureWithFallback(url, fallbackColor) {
     return new Promise((resolve) => {
+        // 首先尝试加载原始URL
         textureLoader.load(
             url,
             // 成功加载时
             (texture) => {
                 console.log(`纹理加载成功: ${url}`);
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
                 resolve(texture);
             },
             // 加载进度时
@@ -25,19 +28,131 @@ function loadTextureWithFallback(url, fallbackColor) {
             // 加载失败时
             (err) => {
                 console.warn(`纹理加载失败: ${url}`, err);
-                // 创建一个纯色纹理作为后备
-                const canvas = document.createElement('canvas');
-                canvas.width = 256;
-                canvas.height = 256;
-                const context = canvas.getContext('2d');
-                context.fillStyle = `#${fallbackColor.toString(16).padStart(6, '0')}`;
-                context.fillRect(0, 0, canvas.width, canvas.height);
                 
-                const fallbackTexture = new THREE.CanvasTexture(canvas);
-                resolve(fallbackTexture);
+                // 尝试备用URL（如果是地球纹理）
+                if (url.includes('earth')) {
+                    const fallbackUrls = [
+                        'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
+                        'https://threejsfundamentals.org/threejs/resources/images/earth.jpg',
+                        // 如果所有外部URL都失败，创建程序化纹理
+                        null
+                    ];
+                    
+                    tryFallbackUrls(fallbackUrls, fallbackColor, resolve);
+                } else if (url.includes('moon')) {
+                    const fallbackUrls = [
+                        'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg',
+                        // 如果所有外部URL都失败，创建程序化纹理
+                        null
+                    ];
+                    
+                    tryFallbackUrls(fallbackUrls, fallbackColor, resolve);
+                } else {
+                    // 为其他纹理创建后备纹理
+                    createFallbackTexture(fallbackColor, resolve);
+                }
             }
         );
     });
+}
+
+// 尝试备用URL的辅助函数
+function tryFallbackUrls(urls, fallbackColor, resolve, index = 0) {
+    if (index >= urls.length || urls[index] === null) {
+        // 所有URL都失败了，创建程序化纹理
+        createFallbackTexture(fallbackColor, resolve);
+        return;
+    }
+    
+    textureLoader.load(
+        urls[index],
+        // 成功
+        (texture) => {
+            console.log(`备用纹理加载成功: ${urls[index]}`);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            resolve(texture);
+        },
+        // 进度
+        undefined,
+        // 失败，尝试下一个URL
+        (err) => {
+            console.warn(`备用纹理加载失败: ${urls[index]}`, err);
+            tryFallbackUrls(urls, fallbackColor, resolve, index + 1);
+        }
+    );
+}
+
+// 创建后备纹理的辅助函数
+function createFallbackTexture(fallbackColor, resolve) {
+    console.log('创建程序化纹理作为后备');
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const context = canvas.getContext('2d');
+    
+    // 为地球创建特殊的程序化纹理
+    if (fallbackColor === 0x2727e6) {
+        // 地球纹理：蓝色背景 + 绿色陆地
+        context.fillStyle = '#2727e6'; // 蓝色海洋
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 添加一些简单的大陆形状
+        context.fillStyle = '#4a7c59'; // 绿色陆地
+        
+        // 绘制一些简单的大陆
+        for (let i = 0; i < 20; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = 20 + Math.random() * 80;
+            
+            context.beginPath();
+            context.arc(x, y, size, 0, Math.PI * 2);
+            context.fill();
+        }
+        
+        // 添加一些云层
+        context.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        for (let i = 0; i < 15; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = 30 + Math.random() * 60;
+            
+            context.beginPath();
+            context.arc(x, y, size, 0, Math.PI * 2);
+            context.fill();
+        }
+    } else {
+        // 其他行星：使用纯色
+        context.fillStyle = `#${fallbackColor.toString(16).padStart(6, '0')}`;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 添加一些噪点纹理
+        for (let i = 0; i < 1000; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const brightness = Math.random() * 0.3 - 0.15;
+            
+            // 正确提取RGB分量
+            const r = Math.floor(((fallbackColor >> 16) & 0xff) * (1 + brightness));
+            const g = Math.floor(((fallbackColor >> 8) & 0xff) * (1 + brightness));
+            const b = Math.floor((fallbackColor & 0xff) * (1 + brightness));
+            
+            // 确保颜色值在有效范围内
+            const clampedR = Math.max(0, Math.min(255, r));
+            const clampedG = Math.max(0, Math.min(255, g));
+            const clampedB = Math.max(0, Math.min(255, b));
+            
+            context.fillStyle = `rgb(${clampedR}, ${clampedG}, ${clampedB})`;
+            context.fillRect(x, y, 1, 1);
+        }
+    }
+    
+    const fallbackTexture = new THREE.CanvasTexture(canvas);
+    fallbackTexture.wrapS = THREE.RepeatWrapping;
+    fallbackTexture.wrapT = THREE.RepeatWrapping;
+    resolve(fallbackTexture);
 }
 
 // 行星数据（相对比例，非真实比例）
@@ -82,9 +197,9 @@ const PLANET_DATA = {
         orbitalSpeed: 0.01,
         tilt: 23.4,
         details: "我们的家园，太阳系中唯一已知存在生命的行星。表面71%被水覆盖，有氧气丰富的大气层。",
-        texture: 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',
-        bumpMap: 'https://threejs.org/examples/textures/planets/earth_normal_2048.jpg',
-        specularMap: 'https://threejs.org/examples/textures/planets/earth_specular_2048.jpg',
+        texture: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/earth_atmos_2048.jpg',
+        bumpMap: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/earth_normal_2048.jpg',
+        specularMap: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/earth_specular_2048.jpg',
         hasTexture: true,
         hasMoon: true // 添加标记表示地球有卫星
     },
@@ -97,8 +212,8 @@ const PLANET_DATA = {
         orbitalSpeed: 0.04, // 月球绕地球公转速度
         tilt: 6.7, // 月球轨道倾角
         details: "地球唯一的自然卫星，直径约3,474公里。月球表面布满陨石坑，没有大气层。",
-        texture: 'https://threejs.org/examples/textures/planets/moon_1024.jpg',
-        bumpMap: 'https://threejs.org/examples/textures/planets/moon_bump_1024.jpg',
+        texture: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/moon_1024.jpg',
+        bumpMap: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/moon_bump_1024.jpg',
         hasTexture: true
     },
     mars: {
@@ -521,6 +636,23 @@ function setupMobileSimpleControls() {
             this.textContent = labelsVisible ? "隐藏标签" : "显示标签";
         });
     }
+    
+    // 移动端重新加载地球纹理按钮
+    const mobileReloadTextureBtn = document.getElementById('mobile-reload-texture');
+    if (mobileReloadTextureBtn) {
+        mobileReloadTextureBtn.addEventListener('click', function() {
+            this.textContent = '正在加载...';
+            this.disabled = true;
+            
+            reloadEarthTexture();
+            
+            // 3秒后恢复按钮状态
+            setTimeout(() => {
+                this.textContent = '重新加载地球纹理';
+                this.disabled = false;
+            }, 3000);
+        });
+    }
 }
 
 // 切换行星标签显示
@@ -849,6 +981,23 @@ function setupViewControls() {
         }
     });
     
+    // 重新加载地球纹理按钮
+    const reloadTextureButton = document.getElementById('reload-earth-texture');
+    if (reloadTextureButton) {
+        reloadTextureButton.addEventListener('click', function() {
+            this.textContent = '正在加载...';
+            this.disabled = true;
+            
+            reloadEarthTexture();
+            
+            // 3秒后恢复按钮状态
+            setTimeout(() => {
+                this.textContent = '重新加载地球纹理';
+                this.disabled = false;
+            }, 3000);
+        });
+    }
+    
     // 地球表面观察位置控制
     const latitudeSlider = document.getElementById('observer-latitude');
     const latitudeValue = document.getElementById('latitude-value');
@@ -1119,26 +1268,34 @@ function createPlanets() {
                     shininess: 5
                 });
                 
-                // 异步加载纹理
-                loadTextureWithFallback(data.texture, data.color).then(texture => {
+                console.log(`开始加载行星 ${key} 的纹理...`);
+                
+                // 异步加载纹理，添加时间戳防止缓存
+                const textureUrl = data.texture + '?t=' + Date.now();
+                loadTextureWithFallback(textureUrl, data.color).then(texture => {
                     material.map = texture;
                     material.needsUpdate = true;
+                    console.log(`行星 ${key} 主纹理已成功应用`);
                 });
                 
                 // 如果有凹凸贴图，添加它
                 if (data.bumpMap) {
-                    loadTextureWithFallback(data.bumpMap, 0x888888).then(bumpTexture => {
+                    const bumpUrl = data.bumpMap + '?t=' + Date.now();
+                    loadTextureWithFallback(bumpUrl, 0x888888).then(bumpTexture => {
                         material.normalMap = bumpTexture;
                         material.normalScale = new THREE.Vector2(0.05, 0.05);
                         material.needsUpdate = true;
+                        console.log(`行星 ${key} 凹凸贴图已应用`);
                     });
                 }
                 
                 // 如果有高光贴图，添加它
                 if (data.specularMap) {
-                    loadTextureWithFallback(data.specularMap, 0x444444).then(specularTexture => {
+                    const specularUrl = data.specularMap + '?t=' + Date.now();
+                    loadTextureWithFallback(specularUrl, 0x444444).then(specularTexture => {
                         material.specularMap = specularTexture;
                         material.needsUpdate = true;
+                        console.log(`行星 ${key} 高光贴图已应用`);
                     });
                 }
             } catch (error) {
@@ -2244,3 +2401,68 @@ function verifyMobileRendering() {
 
 // 启动应用
 window.onload = init;
+
+// 手动重新加载地球纹理
+function reloadEarthTexture() {
+    console.log("手动重新加载地球纹理...");
+    
+    if (!planets['earth'] || !planets['earth'].mesh) {
+        console.error("地球对象不存在");
+        return;
+    }
+    
+    const earth = planets['earth'].mesh;
+    const earthData = PLANET_DATA.earth;
+    
+    // 保存旧材质的引用以便后续处理
+    const oldMaterial = earth.material;
+    
+    // 创建新的材质
+    const newMaterial = new THREE.MeshPhongMaterial({ 
+        color: earthData.color,
+        shininess: 5
+    });
+    
+    // 重新加载主纹理
+    const textureUrl = earthData.texture + '?reload=' + Date.now();
+    loadTextureWithFallback(textureUrl, earthData.color).then(texture => {
+        newMaterial.map = texture;
+        newMaterial.needsUpdate = true;
+        
+        // 替换材质并处理旧材质
+        earth.material = newMaterial;
+        
+        // 正确释放旧材质资源
+        if (oldMaterial) {
+            // 释放旧材质的纹理
+            if (oldMaterial.map) oldMaterial.map.dispose();
+            if (oldMaterial.normalMap) oldMaterial.normalMap.dispose();
+            if (oldMaterial.specularMap) oldMaterial.specularMap.dispose();
+            // 释放材质本身
+            oldMaterial.dispose();
+        }
+        
+        console.log("地球主纹理重新加载成功");
+    });
+    
+    // 重新加载凹凸贴图
+    if (earthData.bumpMap) {
+        const bumpUrl = earthData.bumpMap + '?reload=' + Date.now();
+        loadTextureWithFallback(bumpUrl, 0x888888).then(bumpTexture => {
+            newMaterial.normalMap = bumpTexture;
+            newMaterial.normalScale = new THREE.Vector2(0.05, 0.05);
+            newMaterial.needsUpdate = true;
+            console.log("地球凹凸贴图重新加载成功");
+        });
+    }
+    
+    // 重新加载高光贴图
+    if (earthData.specularMap) {
+        const specularUrl = earthData.specularMap + '?reload=' + Date.now();
+        loadTextureWithFallback(specularUrl, 0x444444).then(specularTexture => {
+            newMaterial.specularMap = specularTexture;
+            newMaterial.needsUpdate = true;
+            console.log("地球高光贴图重新加载成功");
+        });
+    }
+}
