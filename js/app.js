@@ -243,12 +243,12 @@ function init() {
     // 添加行星 - 只创建一次
     createPlanets();
     
-    // 添加环境光
-    const ambientLight = new THREE.AmbientLight(0x333333);
+    // 添加环境光（增强亮度使地球贴图更清晰）
+    const ambientLight = new THREE.AmbientLight(0x555555);
     scene.add(ambientLight);
     
     // 添加点光源（太阳光）
-    const sunLight = new THREE.PointLight(0xffffff, 1.5, 300);
+    const sunLight = new THREE.PointLight(0xffffff, 2.0, 500);
     scene.add(sunLight);
     
     // 初始化画中画视图（在行星创建之后）
@@ -781,13 +781,13 @@ function setupViewControls() {
             // 更新轨道显示
             updateOrbitsVisibility(true);
             
-            // 重置相机位置（确保相机不在太阳内部）
-            resetCameraControls();
-            
-            // 恢复地球可见性
+            // 恢复地球可见性（在重置相机之前）
             if (planets['earth'] && planets['earth'].mesh) {
                 planets['earth'].mesh.visible = true;
             }
+            
+            // 重置相机位置（确保相机不在太阳内部）
+            resetCameraControls();
             
             // 重置交互标志，以便视角能够自动更新
             controls.hasInteracted = false;
@@ -900,12 +900,6 @@ function adjustSunSizeForEarthView(isEarthView) {
         const scale = sunData.earthViewScale * 15; // 增大15倍，确保太阳在地球视角下清晰可见
         sun.scale.set(scale, scale, scale);
         
-        // 大幅增加太阳的亮度
-        if (sun.material) {
-            sun.material.emissiveIntensity = 3.0;
-            sun.material.emissive = new THREE.Color(0xffcc00);
-        }
-        
         // 添加更大更明显的光晕效果
         if (!sun.halo) {
             const haloGeometry = new THREE.SphereGeometry(sunData.radius * 6.0, 32, 32);
@@ -943,13 +937,10 @@ function adjustSunSizeForEarthView(isEarthView) {
         // 恢复太阳原始大小
         sun.scale.set(1, 1, 1);
         
-        // 恢复原始亮度
-        if (sun.material) {
-            sun.material.emissiveIntensity = 1.0;
-            sun.material.emissive = new THREE.Color(0x000000);
-        }
+        // 恢复太阳位置到原点
+        sun.position.set(0, 0, 0);
         
-        // 如果光晕存在，恢复其原始大小
+        // 如果光晕存在，隐藏它
         if (sun.halo) {
             sun.halo.scale.set(1.0, 1.0, 1.0);
             sun.halo.visible = false;
@@ -959,6 +950,9 @@ function adjustSunSizeForEarthView(isEarthView) {
         if (sun.light) {
             sun.light.visible = false;
         }
+        
+        // 确保太阳可见
+        sun.visible = true;
     }
 }
 
@@ -980,6 +974,9 @@ function resetCameraControls() {
     controls.maxDistance = 300;
     controls.target.set(0, 0, 0);
     
+    // 重置相机的up向量（地球视角可能会改变它）
+    camera.up.set(0, 1, 0);
+    
     // 重置相机位置，确保不在太阳内部
     // 增加y轴高度，以便从上方俯视太阳系
     camera.position.set(
@@ -987,6 +984,9 @@ function resetCameraControls() {
         defaultCameraPosition.y + 20, // 增加高度
         defaultCameraPosition.z
     );
+    
+    // 让相机看向原点（太阳位置）
+    camera.lookAt(0, 0, 0);
     
     // 重置交互标志，以便视角能够自动更新
     controls.hasInteracted = false;
@@ -1096,10 +1096,12 @@ function createPlanets() {
         } else if (data.hasTexture) {
             // 使用纹理贴图的行星 - 使用安全加载方式
             try {
-                // 先创建基本材质
+                // 先创建基本材质，增加自发光使地球更亮
                 material = new THREE.MeshPhongMaterial({ 
                     color: data.color,
-                    shininess: 5
+                    shininess: 15,
+                    emissive: 0x112244,
+                    emissiveIntensity: 0.3
                 });
                 
                 // 异步加载纹理
