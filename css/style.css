@@ -1,3 +1,32 @@
+/* ============================================
+   SOLAR SYSTEM 3D - Sci-Fi Command Center UI
+   Aesthetic: Retro-Futuristic Space Station
+   ============================================ */
+
+/* Import distinctive fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+/* CSS Variables for consistent theming */
+:root {
+    --primary-cyan: #00f7ff;
+    --primary-cyan-dim: rgba(0, 247, 255, 0.6);
+    --secondary-gold: #ffd700;
+    --secondary-gold-dim: rgba(255, 215, 0, 0.5);
+    --accent-magenta: #ff00ff;
+    --accent-green: #00ff88;
+    --bg-deep: #020810;
+    --bg-panel: rgba(5, 15, 30, 0.85);
+    --bg-control: rgba(0, 20, 40, 0.6);
+    --border-glow: rgba(0, 247, 255, 0.3);
+    --text-primary: #e0f7ff;
+    --text-secondary: rgba(224, 247, 255, 0.7);
+    --shadow-cyan: 0 0 20px rgba(0, 247, 255, 0.3);
+    --shadow-gold: 0 0 15px rgba(255, 215, 0, 0.4);
+    --font-display: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,13 +34,34 @@
 }
 
 body {
-    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--font-body);
     overflow: hidden;
-    background-color: #000;
-    color: #fff;
-    letter-spacing: 0.3px;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+    font-weight: 400;
 }
 
+/* Subtle scanline overlay effect */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 247, 255, 0.01) 2px,
+        rgba(0, 247, 255, 0.01) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* 3D Container */
 #container {
     position: fixed;
     top: 0;
@@ -21,207 +71,453 @@ body {
     z-index: 1;
 }
 
+/* ============================================
+   MAIN CONTROL PANEL
+   ============================================ */
 #info {
     position: fixed;
     top: 20px;
     left: 20px;
-    background: rgba(10, 15, 30, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    padding: 20px;
-    border-radius: 12px;
-    max-width: 300px;
+    background: var(--bg-panel);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 0;
+    border-radius: 4px;
+    max-width: 320px;
     z-index: 2;
-    border: 1px solid rgba(255, 204, 0, 0.15);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-glow);
+    box-shadow: 
+        var(--shadow-cyan),
+        inset 0 0 60px rgba(0, 247, 255, 0.03),
+        0 20px 60px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    animation: panelFadeIn 0.8s ease-out;
 }
 
+@keyframes panelFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Panel header strip */
+#info::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--primary-cyan) 20%, 
+        var(--secondary-gold) 50%, 
+        var(--primary-cyan) 80%, 
+        transparent 100%
+    );
+    animation: headerGlow 3s ease-in-out infinite;
+}
+
+@keyframes headerGlow {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* Panel content wrapper */
+#info > *:not(#controls) {
+    padding: 0 20px;
+}
+
+#info > h1 {
+    padding-top: 25px;
+}
+
+#info > p {
+    padding-bottom: 0;
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
 h1 {
-    font-size: 22px;
-    margin-bottom: 10px;
-    color: #ffcc00;
+    font-family: var(--font-display);
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: var(--primary-cyan);
     text-transform: uppercase;
-    letter-spacing: 2px;
-    font-weight: 600;
+    letter-spacing: 4px;
+    font-weight: 700;
+    text-shadow: 
+        0 0 10px var(--primary-cyan-dim),
+        0 0 30px rgba(0, 247, 255, 0.2);
+    position: relative;
+    display: inline-block;
+}
+
+h1::after {
+    content: '_';
+    animation: blink 1s step-end infinite;
+    color: var(--secondary-gold);
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
 }
 
 h3 {
-    font-size: 13px;
-    margin: 15px 0 10px;
-    color: #ffcc00;
+    font-family: var(--font-display);
+    font-size: 11px;
+    margin: 20px 20px 12px 20px;
+    padding: 8px 12px;
+    color: var(--secondary-gold);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 500;
-    opacity: 0.9;
+    letter-spacing: 3px;
+    font-weight: 600;
+    background: linear-gradient(90deg, 
+        rgba(255, 215, 0, 0.1) 0%, 
+        transparent 100%
+    );
+    border-left: 2px solid var(--secondary-gold);
+    position: relative;
+}
+
+h3::before {
+    content: '◆';
+    margin-right: 8px;
+    font-size: 8px;
+    vertical-align: middle;
 }
 
 p {
     margin-bottom: 15px;
     font-size: 13px;
-    opacity: 0.85;
+    color: var(--text-secondary);
+    line-height: 1.6;
 }
 
+/* ============================================
+   PLANET INFO DISPLAY
+   ============================================ */
 #planet-info {
-    margin-top: 16px;
-    padding: 12px;
-    background: rgba(255, 204, 0, 0.05);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 204, 0, 0.1);
+    margin: 16px 20px;
+    padding: 16px;
+    background: var(--bg-control);
+    border-radius: 4px;
+    border: 1px solid rgba(0, 247, 255, 0.15);
     font-size: 13px;
+    position: relative;
+    overflow: hidden;
+}
+
+#planet-info::before {
+    content: 'DATA FEED';
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--accent-green);
+    letter-spacing: 2px;
+    opacity: 0.6;
 }
 
 .planet-name {
-    font-weight: 600;
-    color: #ffcc00;
-    margin-bottom: 8px;
-    font-size: 15px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--primary-cyan);
+    margin-bottom: 10px;
+    font-size: 16px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px var(--primary-cyan-dim);
 }
 
 .planet-details {
     margin-bottom: 10px;
+    color: var(--text-secondary);
+    line-height: 1.7;
 }
 
+/* ============================================
+   CONTROLS SECTION
+   ============================================ */
 #controls {
-    margin-top: 20px;
-    padding-top: 10px;
-    border-top: 1px solid #333;
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0, 247, 255, 0.1);
 }
 
 .control-group {
-    margin-bottom: 16px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin: 0 20px 16px 20px;
+    padding: 14px 16px;
+    background: var(--bg-control);
+    border-radius: 4px;
+    border: 1px solid rgba(0, 247, 255, 0.1);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.control-group:hover {
+    border-color: rgba(0, 247, 255, 0.3);
+    box-shadow: inset 0 0 30px rgba(0, 247, 255, 0.05);
+}
+
+/* Decorative corner accents */
+.control-group::before,
+.control-group::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: var(--primary-cyan);
+    border-style: solid;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.control-group::before {
+    top: -1px;
+    left: -1px;
+    border-width: 1px 0 0 1px;
+}
+
+.control-group::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 1px 1px 0;
+}
+
+.control-group:hover::before,
+.control-group:hover::after {
+    opacity: 1;
 }
 
 label {
     display: block;
-    margin-bottom: 8px;
-    font-size: 12px;
+    margin-bottom: 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    opacity: 0.85;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
 }
 
+label span {
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+/* ============================================
+   CUSTOM RANGE SLIDERS
+   ============================================ */
 input[type="range"] {
     width: 100%;
-    background: linear-gradient(90deg, rgba(255, 204, 0, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
-    height: 4px;
-    border-radius: 2px;
+    height: 6px;
+    background: linear-gradient(90deg, 
+        rgba(0, 247, 255, 0.2) 0%, 
+        rgba(255, 215, 0, 0.2) 100%
+    );
+    border-radius: 3px;
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
     margin-top: 4px;
+    position: relative;
 }
 
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    background: linear-gradient(135deg, #ffcc00 0%, #ffaa00 100%);
-    border-radius: 50%;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, var(--primary-cyan) 0%, #0088ff 100%);
+    border-radius: 2px;
     cursor: pointer;
-    box-shadow: 0 0 12px rgba(255, 204, 0, 0.6), 0 0 4px rgba(255, 204, 0, 0.8);
-    transition: box-shadow 0.2s ease;
+    box-shadow: 
+        0 0 15px var(--primary-cyan-dim),
+        0 0 5px var(--primary-cyan);
+    transition: all 0.2s ease;
+    transform: rotate(45deg);
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
-    box-shadow: 0 0 20px rgba(255, 204, 0, 0.8), 0 0 6px rgba(255, 204, 0, 1);
+    box-shadow: 
+        0 0 25px var(--primary-cyan),
+        0 0 10px var(--primary-cyan);
+    transform: rotate(45deg) scale(1.1);
 }
 
 input[type="range"]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: linear-gradient(135deg, #ffcc00 0%, #ffaa00 100%);
-    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, var(--primary-cyan) 0%, #0088ff 100%);
+    border-radius: 2px;
     cursor: pointer;
     border: none;
-    box-shadow: 0 0 12px rgba(255, 204, 0, 0.6), 0 0 4px rgba(255, 204, 0, 0.8);
+    box-shadow: 0 0 15px var(--primary-cyan-dim);
 }
 
 input[type="range"]::-moz-range-track {
-    background: linear-gradient(90deg, rgba(255, 204, 0, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
-    height: 4px;
-    border-radius: 2px;
+    background: linear-gradient(90deg, 
+        rgba(0, 247, 255, 0.2) 0%, 
+        rgba(255, 215, 0, 0.2) 100%
+    );
+    height: 6px;
+    border-radius: 3px;
 }
 
+/* ============================================
+   BUTTONS
+   ============================================ */
 .view-button {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    border: 1px solid rgba(255, 204, 0, 0.25);
-    padding: 8px 12px;
-    border-radius: 6px;
+    background: transparent;
+    color: var(--primary-cyan);
+    border: 1px solid var(--primary-cyan);
+    padding: 10px 16px;
+    border-radius: 2px;
     cursor: pointer;
-    font-size: 13px;
+    font-family: var(--font-display);
+    font-size: 11px;
     margin-right: 8px;
     margin-bottom: 8px;
-    transition: all 0.25s ease;
+    transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 500;
+    letter-spacing: 1px;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+}
+
+.view-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(0, 247, 255, 0.2), 
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.view-button:hover::before {
+    left: 100%;
 }
 
 .view-button:hover {
-    background: rgba(255, 204, 0, 0.15);
-    border-color: rgba(255, 204, 0, 0.5);
-    box-shadow: 0 0 12px rgba(255, 204, 0, 0.2);
+    background: rgba(0, 247, 255, 0.1);
+    box-shadow: 
+        0 0 20px rgba(0, 247, 255, 0.3),
+        inset 0 0 20px rgba(0, 247, 255, 0.1);
 }
 
 .view-button.active {
-    background: linear-gradient(135deg, #ffcc00 0%, #e6b800 100%);
-    color: #000;
-    box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
-    border-color: #ffcc00;
+    background: var(--primary-cyan);
+    color: var(--bg-deep);
+    box-shadow: 
+        0 0 30px var(--primary-cyan-dim),
+        0 0 60px rgba(0, 247, 255, 0.2);
+    font-weight: 700;
 }
 
 #earth-view-toggle {
     width: 100%;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, 
+        rgba(0, 255, 136, 0.1) 0%, 
+        rgba(0, 247, 255, 0.1) 100%
+    );
+    border-color: var(--accent-green);
+    color: var(--accent-green);
 }
 
+#earth-view-toggle:hover {
+    background: linear-gradient(90deg, 
+        rgba(0, 255, 136, 0.2) 0%, 
+        rgba(0, 247, 255, 0.2) 100%
+    );
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.3);
+}
+
+#earth-view-toggle.active {
+    background: var(--accent-green);
+    color: var(--bg-deep);
+}
+
+/* ============================================
+   EARTH VIEW CONTROLS
+   ============================================ */
 #earth-view-controls {
-    margin-top: 10px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 204, 0, 0.1);
+    margin: 12px 20px;
+    padding: 16px;
+    background: rgba(0, 255, 136, 0.03);
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 136, 0.2);
 }
 
 #earth-view-controls .control-group {
-    margin-bottom: 10px;
+    margin: 0 0 12px 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+#earth-view-controls .control-group:last-child {
+    margin-bottom: 0;
 }
 
 #earth-view-controls label {
-    font-size: 13px;
+    font-size: 11px;
     display: flex;
     align-items: center;
 }
 
 #earth-view-controls input[type="checkbox"] {
-    margin-right: 8px;
+    margin-right: 10px;
+    accent-color: var(--accent-green);
+    width: 16px;
+    height: 16px;
 }
 
-/* 聊天框样式 */
+/* ============================================
+   CHAT INTERFACE
+   ============================================ */
 #chat-container {
-    margin-top: 12px;
-    max-height: 200px;
+    margin: 12px 20px 20px 20px;
     display: flex;
     flex-direction: column;
 }
 
 #chat-messages {
-    background: rgba(0, 5, 15, 0.5);
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 10px;
-    max-height: 150px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    padding: 14px;
+    margin-bottom: 12px;
+    max-height: 160px;
     overflow-y: auto;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-family: var(--font-mono);
     font-size: 12px;
-    line-height: 1.5;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    line-height: 1.6;
+    border: 1px solid rgba(0, 247, 255, 0.1);
+    position: relative;
+}
+
+#chat-messages::before {
+    content: 'DEEPSEEK INTERFACE';
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 8px;
+    color: var(--accent-magenta);
+    letter-spacing: 1px;
+    opacity: 0.5;
 }
 
 #chat-messages::-webkit-scrollbar {
@@ -229,19 +525,31 @@ input[type="range"]::-moz-range-track {
 }
 
 #chat-messages::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 247, 255, 0.05);
     border-radius: 2px;
 }
 
 #chat-messages::-webkit-scrollbar-thumb {
-    background: rgba(255, 204, 0, 0.4);
+    background: var(--primary-cyan);
     border-radius: 2px;
 }
 
 .chat-message {
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    animation: messageSlide 0.3s ease-out;
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .chat-message:last-child {
@@ -251,111 +559,276 @@ input[type="range"]::-moz-range-track {
 }
 
 .user-message {
-    color: #7fc7ff;
+    color: var(--primary-cyan);
 }
 
 .user-message strong {
-    color: #5ab3ff;
-    text-shadow: 0 0 8px rgba(90, 179, 255, 0.4);
+    color: var(--secondary-gold);
+    text-shadow: 0 0 8px var(--secondary-gold-dim);
 }
 
 .bot-message {
-    color: #4dffb5;
+    color: var(--accent-green);
 }
 
 .bot-message strong {
-    color: #2aff99;
-    text-shadow: 0 0 8px rgba(42, 255, 153, 0.5);
+    color: var(--accent-magenta);
+    text-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
 }
 
 #chat-input-container {
     display: flex;
-    gap: 8px;
+    gap: 10px;
 }
 
 #chat-input {
     flex: 1;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 6px;
-    padding: 6px 10px;
-    color: #fff;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 247, 255, 0.2);
+    border-radius: 2px;
+    padding: 10px 14px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
     font-size: 13px;
-    transition: border-color 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 #chat-input:focus {
     outline: none;
-    border-color: rgba(255, 204, 0, 0.6);
-    box-shadow: 0 0 8px rgba(255, 204, 0, 0.15);
+    border-color: var(--primary-cyan);
+    box-shadow: 
+        0 0 15px rgba(0, 247, 255, 0.2),
+        inset 0 0 20px rgba(0, 247, 255, 0.05);
+}
+
+#chat-input::placeholder {
+    color: rgba(224, 247, 255, 0.3);
 }
 
 #chat-send {
-    background: linear-gradient(135deg, #ffcc00 0%, #e6b800 100%);
-    color: #000;
+    background: linear-gradient(135deg, var(--accent-magenta) 0%, #aa00ff 100%);
+    color: #fff;
     border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
+    border-radius: 2px;
+    padding: 10px 18px;
     cursor: pointer;
-    font-size: 13px;
+    font-family: var(--font-display);
+    font-size: 11px;
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 #chat-send:hover {
-    background: linear-gradient(135deg, #ffd633 0%, #ffcc00 100%);
-    box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+    box-shadow: 
+        0 0 25px rgba(255, 0, 255, 0.5),
+        0 0 50px rgba(255, 0, 255, 0.2);
+    transform: translateY(-1px);
 }
 
-/* 画中画视图样式 */
+/* ============================================
+   PIP VIEW (Picture in Picture)
+   ============================================ */
 #pip-view {
     position: fixed;
     bottom: 20px;
     right: 20px;
     width: 200px;
     height: 200px;
-    border-radius: 12px;
+    border-radius: 4px;
     overflow: hidden;
-    border: 1px solid rgba(255, 204, 0, 0.3);
+    border: 1px solid var(--border-glow);
     z-index: 10;
-    background: rgba(10, 15, 30, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 204, 0, 0.15);
+    background: var(--bg-panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 
+        var(--shadow-cyan),
+        0 20px 40px rgba(0, 0, 0, 0.5);
+    animation: pipFadeIn 0.6s ease-out 0.3s both;
 }
 
-/* 画中画视图中的当前位置指示器 */
+@keyframes pipFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+#pip-view::before {
+    content: 'ORBITAL VIEW';
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--primary-cyan);
+    letter-spacing: 2px;
+    z-index: 11;
+    text-shadow: 0 0 5px var(--primary-cyan);
+}
+
+#pip-view::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        var(--primary-cyan), 
+        var(--secondary-gold), 
+        var(--primary-cyan)
+    );
+}
+
 #pip-indicator {
     position: absolute;
-    width: 8px;
-    height: 8px;
-    background-color: #ff0000;
+    width: 10px;
+    height: 10px;
+    background: var(--secondary-gold);
     border-radius: 50%;
     z-index: 11;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 5px #ff0000;
+    box-shadow: 
+        0 0 10px var(--secondary-gold),
+        0 0 20px var(--secondary-gold-dim);
+    animation: indicatorPulse 1.5s ease-in-out infinite;
 }
 
-/* 移动端响应式样式 */
+@keyframes indicatorPulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 0 10px var(--secondary-gold), 0 0 20px var(--secondary-gold-dim);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        box-shadow: 0 0 15px var(--secondary-gold), 0 0 30px var(--secondary-gold);
+    }
+}
+
+/* ============================================
+   MOBILE CONTROLS
+   ============================================ */
+#mobile-fullscreen-toggle, 
+#toggle-controls {
+    display: none;
+}
+
+#toggle-controls {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: var(--bg-panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--primary-cyan);
+    border: 1px solid var(--border-glow);
+    padding: 10px 16px;
+    border-radius: 2px;
+    z-index: 100;
+    font-family: var(--font-display);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#mobile-fullscreen-toggle {
+    position: fixed;
+    bottom: 15px;
+    left: 15px;
+    background: var(--bg-panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--secondary-gold);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 18px;
+    line-height: 50px;
+    text-align: center;
+    z-index: 100;
+    box-shadow: var(--shadow-gold);
+    cursor: pointer;
+}
+
+/* ============================================
+   PLANET LABELS
+   ============================================ */
+.planet-label {
+    position: absolute;
+    font-family: var(--font-display);
+    color: var(--primary-cyan);
+    background: var(--bg-panel);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 5px 12px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    pointer-events: none;
+    z-index: 1000;
+    transform: translate(-50%, -50%);
+    text-shadow: 0 0 8px var(--primary-cyan-dim);
+    border: 1px solid var(--border-glow);
+    white-space: nowrap;
+    box-shadow: var(--shadow-cyan);
+}
+
+.planet-label::before {
+    content: '◈';
+    margin-right: 6px;
+    color: var(--secondary-gold);
+    font-size: 8px;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
 @media (max-width: 768px) {
     #info {
         top: 10px;
         left: 10px;
         right: 10px;
         max-width: none;
-        padding: 15px;
-        overflow-y: auto;
         max-height: 50vh;
+        overflow-y: auto;
     }
     
     h1 {
-        font-size: 20px;
+        font-size: 14px;
+        letter-spacing: 2px;
+    }
+    
+    h3 {
+        font-size: 10px;
+        letter-spacing: 2px;
+        margin: 15px 15px 10px 15px;
+        padding: 6px 10px;
     }
     
     p {
-        font-size: 13px;
+        font-size: 12px;
+    }
+    
+    #planet-info {
+        margin: 12px 15px;
+        padding: 12px;
+    }
+    
+    .control-group {
+        margin: 0 15px 12px 15px;
+        padding: 12px;
     }
     
     #pip-view {
@@ -365,9 +838,13 @@ input[type="range"]::-moz-range-track {
         right: 10px;
     }
     
+    #pip-view::before {
+        font-size: 7px;
+    }
+    
     .view-button {
-        padding: 10px;
-        font-size: 16px;
+        padding: 12px;
+        font-size: 11px;
         margin-bottom: 10px;
         width: 100%;
         display: block;
@@ -388,66 +865,41 @@ input[type="range"]::-moz-range-track {
     }
     
     #chat-input {
-        padding: 10px;
+        padding: 12px;
         font-size: 16px;
     }
     
     #chat-send {
-        padding: 10px 15px;
-        font-size: 16px;
+        padding: 12px 16px;
+        font-size: 12px;
     }
     
     .control-group label {
-        font-size: 16px;
-        margin-bottom: 8px;
+        font-size: 11px;
+        margin-bottom: 10px;
     }
     
     #chat-messages {
-        font-size: 14px;
+        font-size: 13px;
     }
     
-    /* 在移动设备上添加全屏模式切换按钮 */
+    #chat-container {
+        margin: 12px 15px 15px 15px;
+    }
+    
+    /* Mobile fullscreen button */
     #mobile-fullscreen-toggle {
         display: block;
-        position: fixed;
-        bottom: 10px;
-        left: 10px;
-        background: rgba(10, 15, 30, 0.8);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        color: #ffcc00;
-        border: 1px solid rgba(255, 204, 0, 0.3);
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-        line-height: 50px;
-        text-align: center;
-        z-index: 100;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        bottom: 60px;
+        z-index: 1001;
     }
     
-    /* 移动设备上控制面板切换按钮 */
+    /* Mobile toggle controls button */
     #toggle-controls {
         display: block;
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        background: rgba(10, 15, 30, 0.8);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        color: #ffcc00;
-        border: 1px solid rgba(255, 204, 0, 0.3);
-        padding: 8px 14px;
-        border-radius: 6px;
-        z-index: 100;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 500;
     }
     
-    /* 控制面板在移动设备上的样式 */
+    /* Controls collapsed state */
     .controls-collapsed #info {
         transform: translateX(-110%);
         transition: transform 0.3s ease-in-out;
@@ -458,199 +910,198 @@ input[type="range"]::-moz-range-track {
         transform: translateX(0);
     }
     
-    /* 隐藏速度控制、视角控制和问答控制 */
+    /* Hide complex controls on mobile */
     #controls h3, 
     #controls .control-group {
         display: none;
     }
     
-    /* 显示简化的控制面板标题 */
     #controls h3.mobile-visible,
     #controls .control-group.mobile-visible {
         display: block;
     }
     
-    /* 隐藏画中画视图 */
+    /* Hide PIP on mobile */
     #pip-view {
         display: none !important;
     }
     
-    /* 简化信息面板 */
-    #info {
-        max-width: none;
-        width: auto;
-        padding: 10px;
-    }
-    
-    /* 显示一个简化的移动端控制按钮 */
+    /* Simplified mobile controls */
     #mobile-simple-controls {
         display: flex;
         flex-direction: column;
         gap: 10px;
-        margin-top: 15px;
+        margin: 15px 15px;
     }
     
     #mobile-simple-controls button {
-        background: rgba(10, 15, 30, 0.7);
-        color: #ffcc00;
-        border: 1px solid rgba(255, 204, 0, 0.3);
-        padding: 12px;
-        border-radius: 6px;
-        font-size: 14px;
+        background: var(--bg-control);
+        color: var(--primary-cyan);
+        border: 1px solid var(--border-glow);
+        padding: 14px;
+        border-radius: 2px;
+        font-family: var(--font-display);
+        font-size: 11px;
         width: 100%;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 500;
+        letter-spacing: 1px;
+        font-weight: 600;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
+        cursor: pointer;
     }
     
-    /* 创建固定在底部的聊天框 */
+    #mobile-simple-controls button:active {
+        background: rgba(0, 247, 255, 0.2);
+    }
+    
+    /* Mobile chat container */
     #mobile-chat-container {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        background: rgba(10, 15, 30, 0.85);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        padding: 10px;
+        background: var(--bg-panel);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        padding: 12px 15px;
         z-index: 1000;
-        border-top: 1px solid rgba(255, 204, 0, 0.2);
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+        border-top: 1px solid var(--border-glow);
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
         display: flex;
         flex-direction: column;
-        max-height: 40vh;
+        max-height: 45vh;
         transition: transform 0.3s ease;
     }
     
-    /* 确保不遮挡全屏按钮 */
-    #mobile-fullscreen-toggle {
-        z-index: 1001; /* 确保在聊天框上方 */
-        bottom: 60px; /* 在聊天框标题栏上方 */
-    }
-    
-    /* 聊天框收起状态 */
     #mobile-chat-container.collapsed {
-        transform: translateY(calc(100% - 40px));
+        transform: translateY(calc(100% - 45px));
     }
     
-    /* 聊天框收起状态下，全屏按钮位置调整 */
     #mobile-chat-container.collapsed ~ #mobile-fullscreen-toggle {
-        bottom: 10px;
+        bottom: 15px;
     }
     
-    /* 聊天框标题栏 */
     #mobile-chat-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 5px 0;
-        margin-bottom: 8px;
-        border-bottom: 1px solid rgba(255, 204, 0, 0.3);
+        margin-bottom: 10px;
+        border-bottom: 1px solid var(--border-glow);
     }
     
     #mobile-chat-header h3 {
         margin: 0;
-        font-size: 16px;
-        color: #ffcc00;
+        padding: 0;
+        font-family: var(--font-display);
+        font-size: 12px;
+        color: var(--primary-cyan);
+        background: none;
+        border: none;
+    }
+    
+    #mobile-chat-header h3::before {
+        content: none;
     }
     
     #mobile-chat-toggle {
         background: none;
         border: none;
-        color: #ffcc00;
+        color: var(--primary-cyan);
         font-size: 16px;
         cursor: pointer;
-        padding: 0;
+        padding: 5px 10px;
     }
     
-    /* 聊天消息区域 */
     #mobile-chat-messages {
         overflow-y: auto;
         flex-grow: 1;
-        margin-bottom: 10px;
-        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-        font-size: 13px;
+        margin-bottom: 12px;
+        font-family: var(--font-mono);
+        font-size: 12px;
         max-height: 25vh;
-        background: rgba(0, 5, 15, 0.4);
-        border-radius: 8px;
-        padding: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 4px;
+        padding: 12px;
+        border: 1px solid rgba(0, 247, 255, 0.1);
     }
     
-    /* 聊天输入区域 */
     #mobile-chat-input-container {
         display: flex;
-        gap: 8px;
+        gap: 10px;
     }
     
     #mobile-chat-input {
         flex-grow: 1;
-        background: rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
-        padding: 12px;
-        color: #fff;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(0, 247, 255, 0.2);
+        border-radius: 2px;
+        padding: 14px;
+        color: var(--text-primary);
+        font-family: var(--font-body);
         font-size: 15px;
-        min-height: 44px;
-        transition: border-color 0.2s ease;
+        min-height: 48px;
+        transition: all 0.3s ease;
     }
     
     #mobile-chat-input:focus {
         outline: none;
-        border-color: rgba(255, 204, 0, 0.6);
-        box-shadow: 0 0 8px rgba(255, 204, 0, 0.15);
+        border-color: var(--primary-cyan);
+        box-shadow: 0 0 15px rgba(0, 247, 255, 0.2);
     }
     
     #mobile-chat-send {
-        background: linear-gradient(135deg, #ffcc00 0%, #e6b800 100%);
-        color: #000;
+        background: linear-gradient(135deg, var(--accent-magenta) 0%, #aa00ff 100%);
+        color: #fff;
         border: none;
-        border-radius: 8px;
-        padding: 12px 18px;
-        font-size: 14px;
+        border-radius: 2px;
+        padding: 14px 20px;
+        font-family: var(--font-display);
+        font-size: 11px;
         font-weight: 600;
-        min-height: 44px;
-        min-width: 65px;
+        min-height: 48px;
+        min-width: 70px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
+        cursor: pointer;
     }
     
-    /* 隐藏原始聊天框 */
+    /* Hide desktop chat on mobile */
     #controls h3:last-of-type,
     #chat-container {
         display: none;
     }
     
-    /* 为底部聊天框留出空间 */
     body {
         padding-bottom: 50px;
     }
-}
-
-/* 在桌面端隐藏移动端特定按钮 */
-#mobile-fullscreen-toggle, #toggle-controls {
-    display: none;
-}
-
-/* 横屏样式优化 */
-@media (max-width: 768px) and (orientation: landscape) {
-    #info {
-        max-height: 80vh;
-        max-width: 300px;
-        left: 10px;
-        top: 10px;
-        bottom: 10px;
+    
+    .planet-label {
+        font-size: 9px;
+        padding: 4px 10px;
+        letter-spacing: 1px;
     }
 }
 
-/* 移动端显示类和桌面端显示类 */
+/* Desktop: hide mobile-only elements */
+#mobile-simple-controls {
+    display: none;
+}
+
+.mobile-visible {
+    display: none;
+}
+
 .mobile-only {
     display: none;
 }
 
 @media (max-width: 768px) {
+    .mobile-visible {
+        display: block;
+    }
+    
     .mobile-only {
         display: inline;
     }
@@ -660,31 +1111,17 @@ input[type="range"]::-moz-range-track {
     }
 }
 
-/* 移动端屏幕方向特定样式 */
-@media (max-width: 768px) and (orientation: portrait) {
-    #info {
-        max-height: 50vh;
-        overflow-y: auto;
-    }
-    
-    .controls-collapsed #info {
-        transform: translateX(-110%);
-    }
-    
-    #mobile-fullscreen-toggle {
-        bottom: 20px;
-    }
-}
-
+/* ============================================
+   LANDSCAPE MOBILE STYLES
+   ============================================ */
 @media (max-width: 768px) and (orientation: landscape) {
     #info {
-        max-height: 80vh;
-        max-width: 320px;
-        overflow-y: auto;
-    }
-    
-    .controls-collapsed #info {
-        transform: translateX(-110%);
+        max-height: 85vh;
+        max-width: 300px;
+        left: 10px;
+        top: 10px;
+        bottom: 10px;
+        right: auto;
     }
     
     #mobile-fullscreen-toggle {
@@ -703,85 +1140,155 @@ input[type="range"]::-moz-range-track {
     }
     
     h3 {
-        margin: 10px 0 5px;
+        margin: 10px 15px 8px 15px;
     }
     
     #chat-container {
-        max-height: 150px;
+        max-height: 130px;
     }
     
     #chat-messages {
-        max-height: 100px;
+        max-height: 90px;
+    }
+    
+    #mobile-chat-container {
+        max-height: 35vh;
+    }
+    
+    #mobile-chat-messages {
+        max-height: 15vh;
     }
 }
 
-/* 确保触摸屏上的滑块更容易操作 */
+/* Portrait mobile adjustments */
+@media (max-width: 768px) and (orientation: portrait) {
+    #info {
+        max-height: 50vh;
+        overflow-y: auto;
+    }
+    
+    .controls-collapsed #info {
+        transform: translateX(-110%);
+    }
+    
+    #mobile-fullscreen-toggle {
+        bottom: 60px;
+    }
+}
+
+/* ============================================
+   TOUCH DEVICE OPTIMIZATIONS
+   ============================================ */
 @media (pointer: coarse) {
     input[type="range"] {
-        height: 25px;
+        height: 24px;
     }
     
     input[type="range"]::-webkit-slider-thumb {
-        width: 25px;
-        height: 25px;
+        width: 28px;
+        height: 28px;
     }
     
     input[type="range"]::-moz-range-thumb {
-        width: 25px;
-        height: 25px;
+        width: 28px;
+        height: 28px;
     }
     
-    .view-button, #chat-send {
-        padding: 12px;
-        min-height: 44px;
+    .view-button, 
+    #chat-send,
+    #mobile-chat-send {
+        padding: 14px;
+        min-height: 48px;
     }
     
-    #chat-input {
-        min-height: 44px;
+    #chat-input,
+    #mobile-chat-input {
+        min-height: 48px;
+        padding: 14px;
     }
 }
 
-/* 桌面端隐藏移动端专用控件 */
-#mobile-simple-controls {
-    display: none;
+/* ============================================
+   LOADING & STATUS ANIMATIONS
+   ============================================ */
+@keyframes loadingDots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60% { content: '...'; }
+    80%, 100% { content: ''; }
 }
 
-/* 添加可在移动端显示的类 */
-.mobile-visible {
-    display: none;
+.loading::after {
+    content: '';
+    animation: loadingDots 1.5s infinite;
 }
 
-@media (max-width: 768px) {
-    .mobile-visible {
-        display: block;
-    }
+/* Status indicator for active elements */
+.status-active::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    margin-right: 8px;
+    box-shadow: 0 0 8px var(--accent-green);
+    animation: statusPulse 1.5s ease-in-out infinite;
 }
 
-/* 行星标签样式 */
-.planet-label {
-    position: absolute;
-    color: #ffcc00;
-    background: rgba(10, 15, 30, 0.7);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    pointer-events: none;
-    z-index: 1000;
-    transform: translate(-50%, -50%);
-    text-shadow: 0 0 8px rgba(255, 204, 0, 0.5);
-    border: 1px solid rgba(255, 204, 0, 0.25);
-    white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+@keyframes statusPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
-@media (max-width: 768px) {
-    .planet-label {
-        font-size: 12px;
-        padding: 5px 12px;
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 247, 255, 0.05);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--primary-cyan), #0088ff);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-cyan);
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-cyan) rgba(0, 247, 255, 0.05);
+}
+
+/* ============================================
+   ACCESSIBILITY & FOCUS STATES
+   ============================================ */
+:focus-visible {
+    outline: 2px solid var(--primary-cyan);
+    outline-offset: 2px;
+}
+
+button:focus-visible,
+input:focus-visible {
+    box-shadow: 0 0 0 3px rgba(0, 247, 255, 0.3);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }
